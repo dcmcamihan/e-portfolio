@@ -1,0 +1,14 @@
+# macOS Finder metadata
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Other operating-system metadata
+Thumbs.db
+Desktop.ini
+
+# macOS archive metadata
+__MACOSX/
+.Spotlight-V100/
+.Trashes/
