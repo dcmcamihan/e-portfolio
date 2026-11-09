@@ -157,7 +157,7 @@ html.is-video .grain { animation-play-state: paused; }
 .dither--static { background: radial-gradient(circle, var(--dot) 1.3px, transparent 1.6px) 0 0 / 9px 9px; }
 
 /* ---------- rotating role ③ ---------- */
-.role { display: inline-flex; align-items: baseline; flex-wrap: wrap; }
+.role { display: inline-flex; align-items: baseline; flex-wrap: wrap; column-gap: 0.3em; }
 .role__slot {
   position: relative; display: inline-block; height: 1.25em; overflow: hidden; vertical-align: bottom;
   border-bottom: 2px solid var(--accent); transition: width var(--t-base) var(--ease-out); white-space: nowrap;

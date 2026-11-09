@@ -114,7 +114,10 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
     const canvas = ref.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false });
-    if (!gl) { setFailed(true); window.dispatchEvent(new Event('dcma:dither-ready')); return; }
+    if (!gl || gl.isContextLost()) {
+      if (import.meta.env.DEV) console.warn('DitherField: no WebGL context', gl && gl.isContextLost());
+      setFailed(true); window.dispatchEvent(new Event('dcma:dither-ready')); return;
+    }
     const sh = (type: number, src: string) => {
       const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || 'shader');
@@ -128,7 +131,10 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
       gl.linkProgram(prog);
       if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('link');
       gl.useProgram(prog);
-    } catch { setFailed(true); window.dispatchEvent(new Event('dcma:dither-ready')); return; }
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('DitherField shader failed:', err);
+      setFailed(true); window.dispatchEvent(new Event('dcma:dither-ready')); return;
+    }
 
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
@@ -244,7 +250,8 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
       removeEventListener('pointerdown', onDown);
       removeEventListener('scroll', onScroll);
       removeEventListener('deviceorientation', onTilt);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      // Free GPU objects but keep the context: StrictMode (and theme changes) re-run this effect on the same canvas.
+      gl.deleteProgram(prog); gl.deleteBuffer(buf); gl.deleteTexture(tex);
     };
   }, [reduce, theme, maskRef]);
 

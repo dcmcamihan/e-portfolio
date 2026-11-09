@@ -34,7 +34,7 @@ export function RotatingRole({ words, prefix = 'I build' }: { words: string[]; p
   return (
     <span className="role" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}>
       <span className="sr-only">{prefix} {words.join(', ')}</span>
-      <span aria-hidden="true">{prefix} </span>
+      <span aria-hidden="true">{prefix}</span>
       <span className="role__slot" style={{ width: w }} aria-hidden="true">
         <span ref={measure} className="role__measure">{words[i]}</span>
         {prev !== null && !reduce && chars(words[prev], 'is-out')}

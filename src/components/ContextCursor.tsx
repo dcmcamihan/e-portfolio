@@ -16,11 +16,12 @@ export function ContextCursor() {
   const dot = useRef<HTMLDivElement>(null);
   const [label, setLabel] = useState('');
   const [shrink, setShrink] = useState(false);
+  const [on, setOn] = useState(false);
 
   useEffect(() => {
     if (coarse || reduce) return;
     document.documentElement.classList.add('has-cursor');
-    let x = -100, y = -100, rx = -100, ry = -100, raf = 0, on = false;
+    let x = -100, y = -100, rx = -100, ry = -100, raf = 0, visible = false;
     let mags: HTMLElement[] = [];
     const collect = () => { mags = Array.from(document.querySelectorAll<HTMLElement>('[data-magnetic]')); };
     collect();
@@ -30,12 +31,12 @@ export function ContextCursor() {
     const move = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
       x = e.clientX; y = e.clientY;
-      if (!on) { on = true; rx = x; ry = y; dot.current?.classList.add('is-on'); }
+      if (!visible) { visible = true; rx = x; ry = y; setOn(true); }
       const t = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-cursor]');
       const l = t?.dataset.cursor ? LABELS[t.dataset.cursor] ?? '' : '';
       setLabel((p) => (p === l ? p : l));
     };
-    const leave = () => { on = false; dot.current?.classList.remove('is-on'); };
+    const leave = () => { visible = false; setOn(false); };
     const down = () => setShrink(true);
     const up = () => setShrink(false);
     const nav = () => setShrink(true);
@@ -78,7 +79,7 @@ export function ContextCursor() {
 
   if (coarse || reduce) return null;
   return (
-    <div ref={dot} className={`cursor ${label ? 'is-label' : ''} ${shrink ? 'is-shrink' : ''}`} aria-hidden="true">
+    <div ref={dot} className={`cursor ${on ? 'is-on' : ''} ${label ? 'is-label' : ''} ${shrink ? 'is-shrink' : ''}`} aria-hidden="true">
       <span>{label}</span>
     </div>
   );
