@@ -13,7 +13,8 @@ export function Shortcuts() {
     let k = 0;
     let gAt = 0;
     const onKey = (e: KeyboardEvent) => {
-      const typing = (e.target as HTMLElement)?.closest('input, textarea, select, [contenteditable="true"]');
+      const tgt = e.target instanceof Element ? e.target : null;
+      const typing = tgt?.closest('input, textarea, select, [contenteditable="true"]');
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         if (overlay === 'palette') close(); else open('palette');

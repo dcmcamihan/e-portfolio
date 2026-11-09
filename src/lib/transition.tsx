@@ -3,7 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { prefersReducedMotion } from './hooks';
 import { projects } from '../data/projects';
 
-type Go = (to: string) => void;
+/** `grow`: ⑪ hand-off — the clicked carousel card scales up from `rect` to fill the screen, then becomes the case hero. */
+export type GoOpts = { grow?: { rect: DOMRect; poster: string } };
+type Go = (to: string, opts?: GoOpts) => void;
 const Ctx = createContext<Go>(() => {});
 
 const scrollToHash = (hash: string) => {
@@ -45,8 +47,9 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const [typed, setTyped] = useState(0);
   const busy = useRef(false);
   const curtain = useRef<HTMLDivElement>(null);
+  const [grow, setGrow] = useState<null | { rect: DOMRect; poster: string; full: boolean; fade: boolean }>(null);
 
-  const go = useCallback<Go>((to) => {
+  const go = useCallback<Go>((to, opts) => {
     const [path, hash = ''] = to.split('#');
     const target = path || loc.pathname;
     if (target === loc.pathname) {
@@ -68,6 +71,21 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
         navigate(to);
         requestAnimationFrame(() => { scrollToHash(hash ? `#${hash}` : ''); setPhase('idle'); finish(); });
       }, 120);
+      return;
+    }
+    if (opts?.grow) {
+      // ⑪ → ⑦: card grows to fill the screen (800ms out-expo), the route swaps under it,
+      // then it fades as the case hero (same poster/video) fades up.
+      setGrow({ ...opts.grow, full: false, fade: false });
+      requestAnimationFrame(() => requestAnimationFrame(() => setGrow((g) => g && { ...g, full: true })));
+      window.setTimeout(() => {
+        navigate(to);
+        requestAnimationFrame(() => {
+          window.scrollTo(0, 0);
+          window.setTimeout(() => setGrow((g) => g && { ...g, fade: true }), 250);
+          window.setTimeout(() => { setGrow(null); finish(); }, 900);
+        });
+      }, 800);
       return;
     }
     const d = describe(target);
@@ -108,6 +126,15 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
         {info.index && <p className="curtain__index mono">{info.index}</p>}
         <p className="curtain__title">{info.title}</p>
       </div>
+      {grow && (
+        <div
+          className={`grow ${grow.full ? 'is-full' : ''} ${grow.fade ? 'is-fade' : ''}`}
+          aria-hidden="true"
+          style={grow.full ? undefined : { top: grow.rect.top, left: grow.rect.left, width: grow.rect.width, height: grow.rect.height }}
+        >
+          <img src={`${import.meta.env.BASE_URL}${grow.poster}`} alt="" />
+        </div>
+      )}
     </Ctx.Provider>
   );
 }

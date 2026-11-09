@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { projectBySlug, nextProject, projectIndex, projects } from '../data/projects';
 import { publications } from '../data/site';
 import { LogLine } from '../components/LogLine';
 import { SplitText } from '../components/SplitText';
 import { PromoVideo } from '../components/PromoVideo';
-import { TLink } from '../lib/transition';
+import { TLink, useGo } from '../lib/transition';
 import { asset, prefersReducedMotion } from '../lib/hooks';
 import { useTitle } from '../lib/useTitle';
 import NotFound from './NotFound';
@@ -18,6 +18,34 @@ export default function CaseStudy() {
   const p = projectBySlug(slug);
   useTitle(p?.name, p?.summary);
   const [play, setPlay] = useState(prefersReducedMotion());
+  const [watch, setWatch] = useState(false);
+  const watchBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => setWatch(false), [slug]);
+  const go = useGo();
+  const [pull, setPull] = useState(0);
+
+  // 1f: a long scroll past the end hands off to the next case through the page transition.
+  useEffect(() => {
+    if (!p) return;
+    const nextSlug = nextProject(p.slug).slug;
+    let acc = 0, idle = 0, lastY = 0, fired = false;
+    const atBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+    const push = (dy: number) => {
+      if (fired || !atBottom() || dy <= 0) return;
+      acc = Math.min(700, acc + dy);
+      setPull(acc / 700);
+      clearTimeout(idle);
+      idle = window.setTimeout(() => { acc = 0; setPull(0); }, 700);
+      if (acc >= 700) { fired = true; go(`/work/${nextSlug}`); }
+    };
+    const wheel = (e: WheelEvent) => push(e.deltaY);
+    const tstart = (e: TouchEvent) => { lastY = e.touches[0].clientY; };
+    const tmove = (e: TouchEvent) => { const y = e.touches[0].clientY; push((lastY - y) * 2); lastY = y; };
+    addEventListener('wheel', wheel, { passive: true });
+    addEventListener('touchstart', tstart, { passive: true });
+    addEventListener('touchmove', tmove, { passive: true });
+    return () => { removeEventListener('wheel', wheel); removeEventListener('touchstart', tstart); removeEventListener('touchmove', tmove); clearTimeout(idle); setPull(0); };
+  }, [p, go]);
   useEffect(() => {
     if (prefersReducedMotion()) return;
     setPlay(false);
@@ -37,29 +65,38 @@ export default function CaseStudy() {
         <TLink to={`/work/${next.slug}`}>Next: {next.name} →</TLink>
       </nav>
 
-      <header className="case__head wrap">
-        <LogLine cmd={`open ${p.slug}`} path="~/work" immediate />
-        <p className="label muted">{p.name} · {p.year} · {p.team}</p>
-        <h1 className="case__title"><SplitText text={p.headline} play={play} stagger={14} /></h1>
+      {/* ⑦ case hero: the promo fades up behind the title after the transition; full-bleed, sound off, click for controls (2f). */}
+      <header className={`case__hero ${play ? 'is-in' : ''} ${watch ? 'is-watching' : ''}`}>
+        <div className="case__video" data-cursor={watch ? undefined : 'play'} onClick={() => { if (!watch && p.video.full) setWatch(true); }}>
+          <PromoVideo src={p.video.full} poster={p.video.poster} label={`${p.name} promo video`} controls={watch} captions={p.video.captions} />
+        </div>
+        <div className="case__overlay wrap">
+          <LogLine cmd={`open ${p.slug}`} path="~/work" immediate />
+          <p className="label case__meta">{p.name} · {p.year} · {p.team}</p>
+          <h1 className="case__title"><SplitText text={p.headline} play={play} stagger={14} /></h1>
+          {p.video.full && (
+            <button type="button" className="btn btn--ghost-invert case__watch" onClick={() => setWatch(true)} ref={watchBtn}>
+              ▶ Watch with controls
+            </button>
+          )}
+        </div>
+        {watch && <button type="button" className="case__close label" onClick={() => { setWatch(false); watchBtn.current?.focus(); }}>Back to title ✕</button>}
+      </header>
+
+      <div className="wrap">
         <dl className="case__facts">
           {p.facts.map((f) => (
             <div key={f.label}><dt className="label">{f.label}</dt><dd>{f.value}</dd></div>
           ))}
         </dl>
-      </header>
-
-      <figure className={`case__hero ${play ? 'is-in' : ''}`}>
-        <div className="case__video">
-          <PromoVideo src={p.video.full} poster={p.video.poster} label={`${p.name} promo video`} autoplay={false} controls captions={p.video.captions} />
-        </div>
-        <figcaption className="wrap">
+        <div className="case__alt">
           <details>
-            <summary className="label">Text alternative</summary>
+            <summary className="label">Text alternative for the video</summary>
             <p>{p.video.transcript}</p>
           </details>
-          <p className="label muted">Sound off · figures inside the promo are illustrative; results below come from the paper.</p>
-        </figcaption>
-      </figure>
+          <p className="label muted">Sound off · captions on · figures inside the promo are illustrative; results below come from the paper.</p>
+        </div>
+      </div>
 
       <section className="case__points wrap" aria-label="Summary">
         {p.sections.map((s, i) => (
@@ -117,6 +154,8 @@ export default function CaseStudy() {
         <TLink to={`/work/${next.slug}`} className="wrap" data-cursor="view">
           <span className="label muted">Next project</span>
           <span className="case__next-name">{next.name} →</span>
+          <span className="label muted case__pull-hint">Keep scrolling to open</span>
+          <span className="case__pull" aria-hidden="true"><span style={{ transform: `scaleX(${pull})` }} /></span>
         </TLink>
       </nav>
     </article>

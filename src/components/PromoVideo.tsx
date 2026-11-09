@@ -92,7 +92,7 @@ export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVide
     >
       <source src={asset(`${src}.webm`)} type="video/webm" />
       <source src={asset(`${src}.mp4`)} type="video/mp4" />
-      {captions && <track kind="captions" src={asset(captions)} srcLang="en" label="English" default={controls} />}
+      {captions && <track kind="captions" src={asset(captions)} srcLang="en" label="English" default />}
     </video>
   );
 });

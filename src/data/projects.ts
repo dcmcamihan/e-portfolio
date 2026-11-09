@@ -17,7 +17,7 @@ export type Project = {
   categories: Category[];
   /** Short stack line under carousel cards. */
   stackLine: string;
-  facts: { label: 'Role' | 'Stack' | 'Platform' | 'Output'; value: string }[];
+  facts: { label: 'Role' | 'Stack' | 'Infra' | 'Output'; value: string }[];
   roleDetail: string;
   team: string;
   stack: string[];
@@ -55,7 +55,7 @@ export const projects: Project[] = [
     facts: [
       { label: 'Role', value: 'Lead developer' },
       { label: 'Stack', value: 'FastAPI · React · MySQL' },
-      { label: 'Platform', value: 'AWS containers' },
+      { label: 'Infra', value: 'AWS, containerised services' },
       { label: 'Output', value: 'Thesis + 3 CCCIS 2026 papers' },
     ],
     roleDetail: 'Manuscript, model pipeline, back end, front end, database and AWS deployment',
@@ -125,7 +125,7 @@ export const projects: Project[] = [
     facts: [
       { label: 'Role', value: 'Full-stack developer' },
       { label: 'Stack', value: 'React · Express · MySQL' },
-      { label: 'Platform', value: 'Web app' },
+      { label: 'Infra', value: 'Render (web) · MySQL' },
       { label: 'Output', value: 'POS for a real shop + paper' },
     ],
     roleDetail: 'Front end, back end and database',
@@ -192,7 +192,7 @@ export const projects: Project[] = [
     facts: [
       { label: 'Role', value: 'Lead' },
       { label: 'Stack', value: 'PyTorch · Swin-T · React' },
-      { label: 'Platform', value: 'Web app + model' },
+      { label: 'Infra', value: 'PyTorch model + web client' },
       { label: 'Output', value: 'ML course manuscript' },
     ],
     roleDetail: 'Research, model development, web app and manuscript',
@@ -258,7 +258,7 @@ export const projects: Project[] = [
     facts: [
       { label: 'Role', value: 'Lead developer' },
       { label: 'Stack', value: 'Kotlin · Arduino · TF Lite' },
-      { label: 'Platform', value: 'Android + smart glove' },
+      { label: 'Infra', value: 'On-device Android + Arduino' },
       { label: 'Output', value: 'ICSTE 2025 paper (Springer LNEE)' },
     ],
     roleDetail: 'Glove firmware, vision model, Kotlin app and manuscript',

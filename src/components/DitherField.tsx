@@ -95,16 +95,20 @@ const rgb = (css: string): [number, number, number] => {
 
 type Props = {
   className?: string;
+  /** Storyboard timeline: the field is drawn still until "dither on" (~2.9s), then drifts and reacts. */
+  live?: boolean;
   /** Image whose alpha masks the field (the hero cutout). */
   maskRef?: RefObject<HTMLImageElement>;
 };
 
 /** ⑧ dither field. WebGL, 30fps cap, pauses off-screen. Static frame with reduced motion; CSS dots with no WebGL. */
-export function DitherField({ className = '', maskRef }: Props) {
+export function DitherField({ className = '', maskRef, live = true }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const reduce = useReducedMotion();
   const { theme } = useUI();
   const [failed, setFailed] = useState(false);
+  const liveRef = useRef(live);
+  useEffect(() => { liveRef.current = live; }, [live]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -183,7 +187,8 @@ export function DitherField({ className = '', maskRef }: Props) {
       const r = canvas.getBoundingClientRect();
       if (e.clientY < r.top || e.clientY > r.bottom) return;
       const [x, y] = toCanvas(e.clientX, e.clientY);
-      s.ripple = [x, y, (performance.now() - t0) / 1000];
+      if (!liveRef.current) return;
+      s.ripple = [x, y, clock];
     };
     // Mobile: drift with scroll position and device tilt.
     const onScroll = () => { s.driftY = scrollY * 0.0015; };
@@ -195,17 +200,19 @@ export function DitherField({ className = '', maskRef }: Props) {
       addEventListener('deviceorientation', onTilt, { passive: true });
     }
 
-    let raf = 0, visible = true, last = 0, announced = false;
-    const t0 = performance.now();
+    let raf = 0, visible = true, last = 0, announced = false, clock = 12, prev = performance.now();
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       if (!reduce && now - last < 1000 / 30) return; // 30fps cap
       last = now;
+      if (liveRef.current && !reduce) clock += (now - prev) / 1000;
+      prev = now;
+      if (!liveRef.current) { s.clear = 0; s.ripple[2] = 0; }
       // lag point trails the pointer and catches up in ~600ms; clearing fades when idle
       s.lx += (s.x - s.lx) * 0.12; s.ly += (s.y - s.ly) * 0.12;
-      const target = now - s.lastMove < 600 ? 1 : 0;
+      const target = liveRef.current && now - s.lastMove < 600 ? 1 : 0;
       s.clear += (target - s.clear) * 0.12;
-      gl.uniform1f(u('uTime'), reduce ? 12 : (now - t0) / 1000);
+      gl.uniform1f(u('uTime'), clock);
       gl.uniform2f(u('uPtr'), s.x, s.y);
       gl.uniform2f(u('uLag'), s.lx, s.ly);
       gl.uniform1f(u('uClear'), s.clear);

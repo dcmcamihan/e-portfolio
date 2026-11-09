@@ -102,7 +102,10 @@ export function Carousel3D({ items }: { items: Project[] }) {
         }}
         onPointerCancel={() => { start.current = null; setDrag(0); }}
       >
-        <p className="carousel__log label" aria-hidden="true">{pad(index + 1)} / {pad(n)}</p>
+        <p className="carousel__log mono" aria-hidden="true">
+          <span>[{new Date().toTimeString().slice(0, 8)}] <span className="accent">INFO</span> ~/work $ ls --featured</span>
+          <span className="label">{pad(index + 1)} / {pad(n)}</span>
+        </p>
         <div className="carousel__ring" key={rebuild}>
           {list.map((p, i) => {
             let d = i - index;
@@ -125,9 +128,12 @@ export function Carousel3D({ items }: { items: Project[] }) {
                 }}
                 aria-hidden={!isFront}
                 data-cursor={isFront ? 'view' : 'play'}
-                onClick={() => {
+                onClick={(e) => {
                   if (start.current?.moved) return;
-                  if (isFront) go(`/work/${p.slug}`); else goTo(i);
+                  if (!isFront) { goTo(i); return; }
+                  const media = (e.currentTarget as HTMLElement).querySelector('.carousel__media');
+                  const rect = media?.getBoundingClientRect();
+                  go(`/work/${p.slug}`, rect ? { grow: { rect, poster: p.video.poster } } : undefined);
                 }}
               >
                 <div className="carousel__media">

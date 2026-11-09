@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Badge } from '../data/site';
-import { asset, storage, useCoarsePointer, useReducedMotion } from '../lib/hooks';
+import { asset, storage, useReducedMotion } from '../lib/hooks';
 import { useFocusTrap } from '../lib/focusTrap';
 import { useInViewOnce } from '../lib/useInView';
 
@@ -14,13 +14,12 @@ const SIZE = 132;
  * ⑥ certification stickers. Badges drop in (80ms stagger) at slight tilts. Grab lifts a badge
  * (scale 1.08, deeper shadow) and straightens it; release settles it with a spring and the spot is
  * kept for the visit. A click without a drag opens the name, issuer and Credly verify link.
- * Touch and reduced motion: a static grid, no tilt; tap or Enter opens the card.
+ * Touch: long-press to drag, tap to open. Reduced motion: a static grid, no tilt; Enter opens the card.
  */
 export function StickerBoard({ badges }: { badges: Badge[] }) {
   const board = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
-  const coarse = useCoarsePointer();
-  const flat = reduce || coarse;
+  const flat = reduce;
   const entered = useInViewOnce(board, 0.25);
   const [pos, setPos] = useState<Record<string, Pos> | null>(() => {
     try { const s = ss.get(KEY); return s ? JSON.parse(s) : null; } catch { return null; }
@@ -28,7 +27,16 @@ export function StickerBoard({ badges }: { badges: Badge[] }) {
   const [held, setHeld] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [height, setHeight] = useState(340);
-  const drag = useRef<{ id: string; ox: number; oy: number; sx: number; sy: number; moved: boolean } | null>(null);
+  const drag = useRef<{ id: string; ox: number; oy: number; sx: number; sy: number; moved: boolean; active: boolean; timer?: number } | null>(null);
+
+  // Touch: once a long-press has picked a sticker up, stop the page from scrolling under the finger.
+  useEffect(() => {
+    const b = board.current;
+    if (!b) return;
+    const block = (e: TouchEvent) => { if (drag.current?.active) e.preventDefault(); };
+    b.addEventListener('touchmove', block, { passive: false });
+    return () => b.removeEventListener('touchmove', block);
+  }, [flat]);
   const top = useRef(badges.length + 1);
 
   // Grid layout from the Design System logic; dragged positions are stored as fractions of the board.
@@ -95,17 +103,32 @@ export function StickerBoard({ badges }: { badges: Badge[] }) {
               style={{ left: p.x * w, top: p.y, zIndex: p.z, '--r': `${TILT[i % TILT.length]}deg`, '--enter': `${i * 80}ms` } as CSSProperties}
               aria-label={`${b.name}, ${b.issuer}. Open verification`}
               onPointerDown={(e) => {
-                e.preventDefault();
-                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                drag.current = { id: b.id, ox: e.clientX - p.x * w, oy: e.clientY - p.y, sx: e.clientX, sy: e.clientY, moved: false };
-                const z = ++top.current;
-                setHeld(b.id);
-                setPos((s) => s && ({ ...s, [b.id]: { ...s[b.id], z } }));
+                const touch = e.pointerType === 'touch';
+                if (!touch) e.preventDefault();
+                const el = e.currentTarget as HTMLElement;
+                const pid = e.pointerId;
+                const lift = () => {
+                  if (!drag.current) return;
+                  drag.current.active = true;
+                  try { el.setPointerCapture(pid); } catch { /* pointer gone */ }
+                  const z = ++top.current;
+                  setHeld(b.id);
+                  setPos((s) => s && ({ ...s, [b.id]: { ...s[b.id], z } }));
+                };
+                drag.current = { id: b.id, ox: e.clientX - p.x * w, oy: e.clientY - p.y, sx: e.clientX, sy: e.clientY, moved: false, active: false };
+                if (touch) drag.current.timer = window.setTimeout(lift, 350); else lift();
               }}
+              onPointerCancel={() => { if (drag.current?.timer) clearTimeout(drag.current.timer); drag.current = null; setHeld(null); }}
               onPointerMove={(e) => {
                 const d = drag.current;
                 if (!d || d.id !== b.id) return;
-                if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 5) d.moved = true;
+                const dist = Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy);
+                if (!d.active) {
+                  // finger moved before the long-press: it's a scroll, not a drag
+                  if (dist > 8) { clearTimeout(d.timer); drag.current = null; }
+                  return;
+                }
+                if (dist > 5) d.moved = true;
                 if (!d.moved) return;
                 const rect = board.current!.getBoundingClientRect();
                 const x = Math.max(0, Math.min(rect.width - SIZE, e.clientX - d.ox));
@@ -114,6 +137,7 @@ export function StickerBoard({ badges }: { badges: Badge[] }) {
               }}
               onPointerUp={() => {
                 const d = drag.current;
+                if (d?.timer) clearTimeout(d.timer);
                 drag.current = null;
                 setHeld(null);
                 if (d && !d.moved) setOpenId(b.id);

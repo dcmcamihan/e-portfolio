@@ -54,9 +54,11 @@ export default function Contact() {
           </fieldset>
           <label className="brief__field brief__wide"><span className="label">--message</span><textarea name="message" rows={5} required placeholder="Who it's for, what it should do, your timeline." /></label>
           <div className="brief__wide brief__send">
-            <p className="label" aria-live="polite">
-              {sent ? <><span className="lvl-ok">[OK]</span> brief drafted in your email app</> : <span className="muted">opens your email app · nothing is stored here</span>}
-            </p>
+            <div aria-live="polite">
+              {sent
+                ? <LogLine level="OK" cmd="mail --send brief.md" result="brief drafted in your email app" immediate />
+                : <p className="label muted">opens your email app · nothing is stored here</p>}
+            </div>
             <button type="submit" className="btn btn--lg" data-magnetic><span data-magnetic-label>Send brief →</span></button>
           </div>
         </form>

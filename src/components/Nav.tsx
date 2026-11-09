@@ -52,10 +52,11 @@ export function Nav() {
         </nav>
         <div className="nav__tools">
           <button type="button" className="kbd-btn" onClick={() => open('palette')} aria-label="Open command palette">
-            <kbd>{mac ? '⌘K' : 'Ctrl K'}</kbd>
+            <span className="kbd-btn__chev" aria-hidden="true">»</span><kbd>{mac ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
           <span className="label nav__time" aria-label={`Davao City local time ${time}`}>DVO {time}</span>
           <ThemeToggle />
+          <button type="button" className="nav__chev" onClick={() => open('palette')} aria-label="Open command palette">»</button>
           <button type="button" className="nav__burger" aria-expanded={menu} aria-controls="mobile-menu" onClick={() => setMenu((m) => !m)}>
             <span className="sr-only">Menu</span><i /><i />
           </button>

@@ -20,7 +20,7 @@ const HELP = [
   'clear        clear the screen',
   'exit         leave terminal mode',
 ];
-const BOOT: Line[] = [
+const BOOT: { kind: Kind; text: string }[] = [
   { kind: 'muted', text: 'DCMA shell v0.2 — type help' },
   { kind: 'ok', text: 'boot  terminal mode ready' },
 ];
@@ -61,8 +61,21 @@ export function Terminal() {
     setMounted(true);
     if (reduce) { setLines(BOOT); input.current?.focus(); return; }
     setLines([]);
-    const timers = BOOT.map((l, k) => window.setTimeout(() => setLines((ls) => [...ls, l]), 700 + k * 260));
-    timers.push(window.setTimeout(() => input.current?.focus(), 900));
+    // Boot log types on (18ms/char) once the 1200ms wipe is mostly up.
+    const timers: number[] = [];
+    let t = 900;
+    BOOT.forEach((b, k) => {
+      for (let i = 1; i <= b.text.length; i++) {
+        const txt = b.text.slice(0, i);
+        timers.push(window.setTimeout(() => setLines((ls) => {
+          const next = [...ls];
+          next[k] = { kind: b.kind, text: txt };
+          return next;
+        }), t + i * 18));
+      }
+      t += b.text.length * 18 + 120;
+    });
+    timers.push(window.setTimeout(() => input.current?.focus(), t));
     return () => timers.forEach(clearTimeout);
   }, [active, reduce]);
 
@@ -127,7 +140,7 @@ export function Terminal() {
       <div className="terminal__body" ref={scroller} onClick={() => input.current?.focus()} role="log" aria-live="polite">
         {lines.map((l, k) => (
           <p key={k} className={`t-${l.kind}`}>
-            {l.kind === 'ok' && <span className="t-tag">OK  </span>}
+            {l.kind === 'ok' && !String(l.text).startsWith('boot') && <span className="t-tag">OK  </span>}
             {l.kind === 'err' && <span className="t-tag">ERR  </span>}
             {l.text}
           </p>
