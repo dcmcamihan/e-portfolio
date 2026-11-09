@@ -1,0 +1,80 @@
+/* Design tokens — Design System v2.
+   TODO: verify every value against "Design System v2.dc.html" §01–§04 once the file is available locally;
+   only the two accent values were given in writing. */
+:root {
+  /* type */
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+  --fs-2xl: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
+  --fs-hero: clamp(3rem, 1.2rem + 8vw, 9.5rem);
+  --lh-tight: 0.95;
+  --lh-body: 1.6;
+
+  /* spacing (4px base) */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 144px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --maxw: 1360px;
+  --radius-sm: 6px; --radius: 10px; --radius-lg: 18px;
+
+  /* motion */
+  --dur-fast: 160ms;
+  --dur: 320ms;
+  --dur-slow: 640ms;
+  --dur-page: 720ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* dark (default) */
+:root, [data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0B0D10;
+  --bg-2: #111419;
+  --surface: #161A20;
+  --surface-2: #1D222A;
+  --line: #262C35;
+  --line-strong: #3A424E;
+  --fg: #E8ECF1;
+  --fg-2: #A9B2BE;
+  --fg-3: #77808C;
+  --accent: #7FD3E6;
+  --accent-ink: #0B0D10;
+  --accent-soft: rgba(127, 211, 230, 0.12);
+  /* log levels — log and terminal text only */
+  --log-info: #7FB6FF;
+  --log-ok: #7EE0A1;
+  --log-warn: #F2C46D;
+  --log-err: #FF8A80;
+  --grain-opacity: 0.06;
+  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+}
+
+/* light = clean cool white */
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #F6F8FA;
+  --bg-2: #EEF2F5;
+  --surface: #FFFFFF;
+  --surface-2: #F1F4F7;
+  --line: #DCE2E8;
+  --line-strong: #BCC5CF;
+  --fg: #0E1217;
+  --fg-2: #47515D;
+  --fg-3: #66707C;
+  --accent: #0F7488;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(15, 116, 136, 0.1);
+  --log-info: #1F5FBF;
+  --log-ok: #1D7A45;
+  --log-warn: #8A5A00;
+  --log-err: #B3261E;
+  --grain-opacity: 0.035;
+  --shadow: 0 24px 60px -28px rgba(15, 30, 45, 0.25);
+}

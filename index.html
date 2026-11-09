@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dianna Claire Marie Amihan — Front-end & full-stack developer</title>
+    <meta name="description" content="Dianna Claire Marie Amihan builds websites, web apps, dashboards and AI integrations from Davao City, Philippines." />
+    <meta name="theme-color" content="#0B0D10" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Dianna Claire Marie Amihan — Developer" />
+    <meta property="og:description" content="Websites, web apps, dashboards and AI integrations. Based in Davao City, Philippines." />
+    <meta property="og:image" content="https://dcmcamihan.github.io/e-portfolio/og.jpg" />
+    <meta property="og:url" content="https://dcmcamihan.github.io/e-portfolio/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/e-portfolio/favicon.svg" type="image/svg+xml" />
+    <script>
+      // Restore the path GitHub Pages' 404.html fallback sends us, and apply the theme before paint.
+      (function () {
+        try {
+          var t = localStorage.getItem('dcma-theme');
+          if (!t) t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          document.documentElement.dataset.theme = t;
+        } catch (e) { document.documentElement.dataset.theme = 'dark'; }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Dianna Claire Marie Amihan — developer portfolio. Email: diannaclairemarie.amihan@gmail.com</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

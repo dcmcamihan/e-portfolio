@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.log
+
+# pre-build asset staging folder (copied into public/)
+/assets/
+.claude/
