@@ -47,8 +47,8 @@
 }
 /* Dark: white on the background, accent cyan where the name crosses the photo.
    Light: a single layer with the difference blend (black on white, white over the photo). */
-.hero__name--in { color: var(--accent); }
-.hero__name--in .hero__caret { background: var(--accent); }
+.hero__name--in { color: #6B7275; }
+.hero__name--in .hero__caret { background: #6B7275; }
 [data-theme='light'] .hero__namewrap { mix-blend-mode: difference; }
 [data-theme='light'] .hero__name { color: #FFFFFF; }
 [data-theme='light'] .hero__name .hero__caret { background: #FFFFFF; }
