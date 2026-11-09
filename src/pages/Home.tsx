@@ -29,41 +29,6 @@ export default function Home() {
   const [live, setLive] = useState(false);
   useEffect(() => { if (!play) return; const t = window.setTimeout(() => setLive(true), 500); return () => window.clearTimeout(t); }, [play]);
   const featured = badges.filter((b) => b.featured);
-  const nameWrap = useRef<HTMLDivElement>(null);
-  const nameIn = useRef<HTMLDivElement>(null);
-  const nameLines = (
-    <>
-      <span className="hero__line hero__line--1"><SplitText text={profile.first} play={play} /></span>
-      <span className="hero__line hero__line--2">
-        <SplitText text={profile.last} play={play} delay={60} from="right" />
-        <span className="caret hero__caret" aria-hidden="true" />
-      </span>
-    </>
-  );
-
-  // Keep the inverted layer's mask on the photo while both move (parallax, scroll, resize).
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      const layer = nameIn.current, img = cutout.current;
-      if (!layer || !img) return;
-      const l = layer.getBoundingClientRect(), r = img.getBoundingClientRect();
-      if (l.bottom < 0) return;
-      layer.style.setProperty('--mx', `${r.left - l.left}px`);
-      layer.style.setProperty('--my', `${r.top - l.top}px`);
-      layer.style.setProperty('--mw', `${r.width}px`);
-      layer.style.setProperty('--mh', `${r.height}px`);
-      // follow the hover lens too: inside it the photo is drawn as dots, so the name stays base colour there
-      layer.style.setProperty('--lx', `${r.left - l.left + parseFloat(img.style.getPropertyValue('--lx') || '-9999')}px`);
-      layer.style.setProperty('--ly', `${r.top - l.top + parseFloat(img.style.getPropertyValue('--ly') || '-9999')}px`);
-      layer.style.setProperty('--lr', img.style.getPropertyValue('--lr') || '0px');
-    };
-    const layer = nameIn.current;
-    if (layer) layer.style.setProperty('--photo', `url(${asset('img/hero.webp')})`);
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   // ② name reveal after the preloader wipe; scroll drift ±40px; cursor parallax (you 8, field 24, name −12).
   useEffect(() => whenBooted(() => setPlay(true)), []);
@@ -109,12 +74,13 @@ export default function Home() {
           <span className="right">Local time<br />{time} GMT+8</span>
         </div>
 
-        {/* Two-tone name: the base layer uses the theme's ink; a copy masked to the cutout's
-            silhouette uses the opposite colour, so the name flips where it crosses the photo. */}
-        <div className="hero__namewrap wrap" ref={nameWrap}>
-          <h1 id="hero-name" className="hero__name" aria-label={profile.name}>{nameLines}</h1>
-          <div className="hero__name hero__name--in" aria-hidden="true" ref={nameIn}>{nameLines}</div>
-        </div>
+        <h1 id="hero-name" className="hero__name wrap" aria-label={profile.name}>
+          <span className="hero__line hero__line--1"><SplitText text={profile.first} play={play} /></span>
+          <span className="hero__line hero__line--2">
+            <SplitText text={profile.last} play={play} delay={60} from="right" />
+            <span className="caret hero__caret" aria-hidden="true" />
+          </span>
+        </h1>
 
         <div className="hero__foot wrap">
           <div className="hero__intro">
