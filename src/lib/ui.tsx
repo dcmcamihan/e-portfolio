@@ -50,10 +50,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
     vt.ready.then(() => {
       document.documentElement.animate(
         { clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${r}px at ${origin.x}px ${origin.y}px)`] },
-        { duration: 560, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
+        { duration: 600, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
       );
     });
   }, [theme]);
+
+  // Grain pauses while a project video plays (Design System §08).
+  useEffect(() => { document.documentElement.classList.toggle('is-video', playing !== null); }, [playing]);
 
   const value = useMemo<UI>(() => ({
     theme, toggleTheme, overlay,

@@ -1,50 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from '../lib/hooks';
 
-const GLYPHS = '!<>-_\\/[]{}=+*^?#';
-
-/** ③ rotating role: scrambles from one role to the next every few seconds. */
-export function RotatingRole({ roles }: { roles: string[] }) {
+/**
+ * ③ rotating role words. Hold 2.4s; the old word exits upward char by char (0–240ms),
+ * the new one enters from below (120–480ms) while the underline resizes. Pauses on hover.
+ * Screen readers hear the whole list once; no live region.
+ */
+export function RotatingRole({ words, prefix = 'I build' }: { words: string[]; prefix?: string }) {
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
-  const [text, setText] = useState(roles[0]);
+  const [prev, setPrev] = useState<number | null>(null);
+  const [w, setW] = useState<number | undefined>();
+  const paused = useRef(false);
+  const measure = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (reduce) return;
-    const id = window.setInterval(() => setI((x) => (x + 1) % roles.length), 2800);
+    const id = window.setInterval(() => {
+      if (paused.current) return;
+      setI((x) => { setPrev(x); return (x + 1) % words.length; });
+    }, 2400);
     return () => window.clearInterval(id);
-  }, [reduce, roles.length]);
+  }, [reduce, words.length]);
 
-  useEffect(() => {
-    if (reduce) { setText(roles[i]); return; }
-    const target = roles[i];
-    const from = text;
-    const len = Math.max(from.length, target.length);
-    let frame = 0, raf = 0;
-    const total = 22;
-    const tick = () => {
-      frame++;
-      let out = '';
-      for (let k = 0; k < len; k++) {
-        const settle = (k / len) * total * 0.8;
-        if (frame > settle + 6) out += target[k] ?? '';
-        else if (frame > settle) out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        else out += from[k] ?? '';
-      }
-      setText(out);
-      if (frame < total + 6) raf = requestAnimationFrame(tick);
-      else setText(target);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i, reduce]);
+  useLayoutEffect(() => { if (measure.current) setW(measure.current.offsetWidth); }, [i]);
+
+  const chars = (word: string, cls: string) => (
+    <span className={`role__word ${cls}`} aria-hidden="true">
+      {[...word].map((c, k) => <span key={k} style={{ '--k': k } as CSSProperties}>{c === ' ' ? ' ' : c}</span>)}
+    </span>
+  );
 
   return (
-    <span className="role">
-      <span className="sr-only">{roles.join(', ')}</span>
-      <span aria-hidden="true">{text}</span>
-      <span className="caret" aria-hidden="true" />
+    <span className="role" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}>
+      <span className="sr-only">{prefix} {words.join(', ')}</span>
+      <span aria-hidden="true">{prefix} </span>
+      <span className="role__slot" style={{ width: w }} aria-hidden="true">
+        <span ref={measure} className="role__measure">{words[i]}</span>
+        {prev !== null && !reduce && chars(words[prev], 'is-out')}
+        {chars(words[i], prev !== null && !reduce ? 'is-in' : '')}
+      </span>
     </span>
   );
 }

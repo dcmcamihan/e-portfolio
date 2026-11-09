@@ -40,7 +40,12 @@ public/
   video/<slug>.{mp4,webm}        full promo cut (case-study hero)
   video/<slug>-loop.{mp4,webm}   8 s silent loop (home stack, carousel)
   video/<slug>-poster.jpg        poster still
+  video/<slug>.vtt               captions, timed from the composition's scene list
+  img/ui/                        case-study interface screens (browser chrome cropped off)
 ```
+
+Design sources: `Design System v2`, `Wireframes v2` (turn 2, hero 1a, research 1i), `Motion Storyboard v2`
+and `Motion Ideas from Your Files v2`. Component doc comments name the beat (① to ⑬) they implement.
 
 Motion beats from the storyboard: ① preloader, ② split name, ③ rotating role, ④ cursor, ⑤ project stack,
 ⑥ sticker board, ⑦ page transition, ⑨ theme toggle, ⑩ section headers, ⑪ carousel, ⑫ palette and terminal, ⑬ commit graph.
@@ -48,9 +53,10 @@ Each one checks `prefers-reduced-motion` and falls back to a static state.
 
 ## Keyboard
 
-- `⌘K` / `Ctrl+K`: command palette
-- `` ` ``: terminal (`help`, `whoami`, `ls projects`, `open <name>`, `cd <page>`, `theme`, `clear`, `exit`)
-- Konami code: terminal
+- `⌘K` / `Ctrl+K`: command palette (its first command is Open terminal mode)
+- `` ` ``: terminal mode (`help`, `whoami`, `ls projects`, `open <name>`, `cd <page>`, `theme`, `clear`, `exit`)
+- Konami code (↑↑↓↓←→←→BA): terminal mode
+- `G` then `H` / `W` / `A` / `C` / `R` / `M`: Home, Work, About, Certs, Research, Contact
 - Carousel: `←` `→`, `Tab`, `Enter`
 
 ## Add a project

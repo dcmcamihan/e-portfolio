@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import gsap from 'gsap';
@@ -15,14 +15,13 @@ import { TransitionProvider } from './lib/transition';
 import { useUI } from './lib/ui';
 import { prefersReducedMotion } from './lib/hooks';
 import Home from './pages/Home';
-
-const Work = lazy(() => import('./pages/Work'));
-const CaseStudy = lazy(() => import('./pages/CaseStudy'));
-const About = lazy(() => import('./pages/About'));
-const Certifications = lazy(() => import('./pages/Certifications'));
-const Research = lazy(() => import('./pages/Research'));
-const Contact = lazy(() => import('./pages/Contact'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+import Work from './pages/Work';
+import CaseStudy from './pages/CaseStudy';
+import About from './pages/About';
+import Certifications from './pages/Certifications';
+import Research from './pages/Research';
+import Contact from './pages/Contact';
+import NotFound from './pages/NotFound';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -63,8 +62,7 @@ export default function App() {
       <Shortcuts />
       <Nav />
       <main id="main" tabIndex={-1}>
-        <Suspense fallback={<div className="page wrap" aria-busy="true" />}>
-          <Routes>
+        <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/work" element={<Work />} />
             <Route path="/work/:slug" element={<CaseStudy />} />
@@ -73,8 +71,7 @@ export default function App() {
             <Route path="/research" element={<Research />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+        </Routes>
       </main>
       <Footer />
       <CommandPalette />

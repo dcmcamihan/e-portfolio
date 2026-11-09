@@ -1,80 +1,99 @@
-/* Design tokens — Design System v2.
-   TODO: verify every value against "Design System v2.dc.html" §01–§04 once the file is available locally;
-   only the two accent values were given in writing. */
+/* Design tokens — Design System v2 (§03 colour, §04 type, §09 motion). */
 :root {
   /* type */
   --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.875rem;
-  --fs-md: 1rem;
-  --fs-lg: 1.25rem;
-  --fs-xl: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
-  --fs-2xl: clamp(2.25rem, 1.4rem + 3.6vw, 4.5rem);
-  --fs-hero: clamp(3rem, 1.2rem + 8vw, 9.5rem);
-  --lh-tight: 0.95;
-  --lh-body: 1.6;
+  --fs-hero: clamp(52px, 12.4vw, 240px);   /* HERO  clamp(96–240) / .84 / 600 */
+  --lh-hero: 0.84;
+  --fs-h1: clamp(44px, 6vw, 80px);          /* H1    80 / .95 / 500 */
+  --lh-h1: 0.95;
+  --fs-h2: clamp(28px, 3vw, 40px);
+  --fs-h3: clamp(20px, 1.8vw, 28px);
+  --fs-body: 17px;                          /* BODY  17 / 1.55 / 400 */
+  --lh-body: 1.55;
+  --fs-log: 13px;                           /* LOG   13 / mono / 400 */
+  --fs-term: 15px;                          /* TERMINAL 15 / mono / 1.7 */
+  --fs-label: 12px;                         /* LABEL 12 / mono / +.08em */
+  --fs-sm: 14px;
+  --fs-lg: 19px;
 
-  /* spacing (4px base) */
+  /* spacing */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px;
   --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 144px;
-  --gutter: clamp(16px, 4vw, 48px);
-  --maxw: 1360px;
-  --radius-sm: 6px; --radius: 10px; --radius-lg: 18px;
+  --gutter: clamp(16px, 3vw, 40px);
+  --maxw: 1440px;
+  --radius-tag: 2px;
 
-  /* motion */
-  --dur-fast: 160ms;
-  --dur: 320ms;
-  --dur-slow: 640ms;
-  --dur-page: 720ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* motion (v0.1 durations kept, v0.2 additions) */
+  --t-instant: 120ms;
+  --t-quick: 240ms;
+  --t-base: 480ms;
+  --t-slow: 800ms;
+  --t-scene: 1200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* out-expo */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-back: cubic-bezier(0.34, 1.8, 0.64, 1);
+  --type-on: 18ms;
+  --caret: 1060ms;
 }
 
 /* dark (default) */
 :root, [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0B0D10;
-  --bg-2: #111419;
-  --surface: #161A20;
-  --surface-2: #1D222A;
-  --line: #262C35;
-  --line-strong: #3A424E;
-  --fg: #E8ECF1;
-  --fg-2: #A9B2BE;
-  --fg-3: #77808C;
+  --bg: #08090A;
+  --surface: #111314;
+  --surface-2: #0E1011;
+  --surface-3: #1A1D1F;
+  --line: #24282A;
+  --line-strong: rgba(255, 255, 255, 0.3);
+  --line-soft: rgba(255, 255, 255, 0.12);
+  --fg: #EDEFEF;      /* ink */
+  --fg-2: #B9BFC1;    /* body copy */
+  --fg-3: #8B9294;    /* muted */
   --accent: #7FD3E6;
-  --accent-ink: #0B0D10;
-  --accent-soft: rgba(127, 211, 230, 0.12);
-  /* log levels — log and terminal text only */
-  --log-info: #7FB6FF;
-  --log-ok: #7EE0A1;
-  --log-warn: #F2C46D;
-  --log-err: #FF8A80;
-  --grain-opacity: 0.06;
-  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  --accent-ink: #08090A;
+  --accent-soft: rgba(127, 211, 230, 0.18);
+  --accent-line: rgba(127, 211, 230, 0.4);
+  --dot: #3A4144;     /* dither dots */
+  /* log levels — text only, never layout */
+  --log-info: #7FD3E6;
+  --log-ok: #5CE08A;
+  --log-warn: #E8C14A;
+  --log-err: #F26B6B;
+  --grain-opacity: 0.14;
+  --grain-blend: screen;
+  --shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+  --invert: #EDEFEF;
+  --invert-ink: #08090A;
 }
 
 /* light = clean cool white */
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #F6F8FA;
-  --bg-2: #EEF2F5;
-  --surface: #FFFFFF;
-  --surface-2: #F1F4F7;
-  --line: #DCE2E8;
-  --line-strong: #BCC5CF;
-  --fg: #0E1217;
-  --fg-2: #47515D;
-  --fg-3: #66707C;
+  --bg: #FFFFFF;
+  --surface: #F4F7F8;
+  --surface-2: #F4F7F8;
+  --surface-3: #E9EEF0;
+  --line: #E1E7E9;
+  --line-strong: #B7C2C6;
+  --line-soft: #E1E7E9;
+  --fg: #0A1114;
+  --fg-2: #2E393D;
+  --fg-3: #5A6468;
   --accent: #0F7488;
   --accent-ink: #FFFFFF;
   --accent-soft: rgba(15, 116, 136, 0.1);
-  --log-info: #1F5FBF;
-  --log-ok: #1D7A45;
-  --log-warn: #8A5A00;
-  --log-err: #B3261E;
-  --grain-opacity: 0.035;
-  --shadow: 0 24px 60px -28px rgba(15, 30, 45, 0.25);
+  --accent-line: rgba(15, 116, 136, 0.4);
+  --dot: #A3AEB2;
+  /* darker log tones so they keep 4.5:1 on white */
+  --log-info: #0F7488;
+  --log-ok: #1B7A43;
+  --log-warn: #8A6200;
+  --log-err: #B8322F;
+  --grain-opacity: 0.08;
+  --grain-blend: multiply;
+  --shadow: 0 30px 60px rgba(10, 17, 20, 0.14);
+  --invert: #0A1114;
+  --invert-ink: #FFFFFF;
 }

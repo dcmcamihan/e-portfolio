@@ -1,51 +1,85 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCoarsePointer, useReducedMotion } from '../lib/hooks';
 
-/** ④ context cursor: a dot plus a ring that grows and labels itself over data-cursor targets. */
+const LABELS: Record<string, string> = { view: 'VIEW', play: 'PLAY', drag: 'DRAG' };
+
+/**
+ * ④ context cursor + magnetic buttons.
+ * 10px accent dot, position lerp 0.18. Over [data-cursor=view|play|drag] it morphs into a
+ * 72px disc with the label (240ms). Elements with [data-magnetic] lean toward the pointer
+ * within 80px by up to 30% of the distance; their [data-magnetic-label] child moves 1.5× further.
+ * Fine pointers only; native cursor with reduced motion.
+ */
 export function ContextCursor() {
   const coarse = useCoarsePointer();
   const reduce = useReducedMotion();
   const dot = useRef<HTMLDivElement>(null);
-  const ring = useRef<HTMLDivElement>(null);
   const [label, setLabel] = useState('');
+  const [shrink, setShrink] = useState(false);
 
   useEffect(() => {
     if (coarse || reduce) return;
     document.documentElement.classList.add('has-cursor');
-    let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, raf = 0, visible = false;
+    let x = -100, y = -100, rx = -100, ry = -100, raf = 0, on = false;
+    let mags: HTMLElement[] = [];
+    const collect = () => { mags = Array.from(document.querySelectorAll<HTMLElement>('[data-magnetic]')); };
+    collect();
+    const mo = new MutationObserver(() => collect());
+    mo.observe(document.body, { childList: true, subtree: true });
+
     const move = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
       x = e.clientX; y = e.clientY;
-      if (!visible) { visible = true; rx = x; ry = y; ring.current?.classList.add('is-on'); dot.current?.classList.add('is-on'); }
-      const t = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-cursor], a, button, [role="button"], input, textarea, select');
-      const l = t?.dataset.cursor ?? (t ? 'link' : '');
-      setLabel((prev) => (prev === l ? prev : l));
+      if (!on) { on = true; rx = x; ry = y; dot.current?.classList.add('is-on'); }
+      const t = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-cursor]');
+      const l = t?.dataset.cursor ? LABELS[t.dataset.cursor] ?? '' : '';
+      setLabel((p) => (p === l ? p : l));
     };
-    const leave = () => { visible = false; ring.current?.classList.remove('is-on'); dot.current?.classList.remove('is-on'); };
+    const leave = () => { on = false; dot.current?.classList.remove('is-on'); };
+    const down = () => setShrink(true);
+    const up = () => setShrink(false);
+    const nav = () => setShrink(true);
+
     const loop = () => {
-      rx += (x - rx) * 0.2; ry += (y - ry) * 0.2;
-      if (dot.current) dot.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      if (ring.current) ring.current.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
+      rx += (x - rx) * 0.18; ry += (y - ry) * 0.18;
+      if (dot.current) dot.current.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
+      for (const m of mags) {
+        const r = m.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const dx = x - cx, dy = y - cy;
+        const near = x > r.left - 80 && x < r.right + 80 && y > r.top - 80 && y < r.bottom + 80;
+        const tx = near ? dx * 0.3 : 0, ty = near ? dy * 0.3 : 0;
+        m.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+        m.classList.toggle('is-magnet', near);
+        const lab = m.querySelector<HTMLElement>('[data-magnetic-label]');
+        if (lab) lab.style.transform = `translate3d(${tx * 0.5}px, ${ty * 0.5}px, 0)`;
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     addEventListener('pointermove', move, { passive: true });
+    addEventListener('pointerdown', down);
+    addEventListener('pointerup', up);
+    addEventListener('dcma:navigate', nav);
+    addEventListener('dcma:navigated', up);
     document.addEventListener('pointerleave', leave);
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf); mo.disconnect();
       removeEventListener('pointermove', move);
+      removeEventListener('pointerdown', down);
+      removeEventListener('pointerup', up);
+      removeEventListener('dcma:navigate', nav);
+      removeEventListener('dcma:navigated', up);
       document.removeEventListener('pointerleave', leave);
       document.documentElement.classList.remove('has-cursor');
+      mags.forEach((m) => { m.style.transform = ''; });
     };
   }, [coarse, reduce]);
 
   if (coarse || reduce) return null;
-  const big = label && label !== 'link';
   return (
-    <>
-      <div ref={ring} className={`cursor-ring ${label ? 'is-hover' : ''} ${big ? 'is-label' : ''}`} aria-hidden="true">
-        {big && <span>{label}</span>}
-      </div>
-      <div ref={dot} className="cursor-dot" aria-hidden="true" />
-    </>
+    <div ref={dot} className={`cursor ${label ? 'is-label' : ''} ${shrink ? 'is-shrink' : ''}`} aria-hidden="true">
+      <span>{label}</span>
+    </div>
   );
 }

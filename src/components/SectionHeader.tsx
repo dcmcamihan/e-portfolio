@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useRef, type ElementType, type ReactNode } from 'react';
+import { useCallback, useState, type ElementType, type ReactNode } from 'react';
 import { LogLine, type Level } from './LogLine';
+import { SplitText } from './SplitText';
 import { prefersReducedMotion } from '../lib/hooks';
 
 type Props = {
@@ -8,39 +9,28 @@ type Props = {
   result?: string;
   level?: Level;
   title: string;
+  /** Superscript count after the title, e.g. Work ⁰⁴. */
+  count?: number;
+  /** Trailing accent full stop, as in "Selected work." */
+  dot?: boolean;
   as?: ElementType;
   id?: string;
   children?: ReactNode;
 };
 
-/** ⑩ section header: log line types, then the title rises in word by word. */
-export function SectionHeader({ cmd, path, result, level, title, as: Tag = 'h2', id, children }: Props) {
-  const ref = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (prefersReducedMotion()) { el.classList.add('is-in'); return; }
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { el.classList.add('is-in'); io.disconnect(); }
-    }, { threshold: 0.3 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  const words = title.split(' ');
+/** ⑩ log-entry section header: the log line types, then the heading rises with the split reveal. */
+export function SectionHeader({ cmd, path, result, level, title, count, dot, as: Tag = 'h2', id, children }: Props) {
+  const [go, setGo] = useState(() => prefersReducedMotion());
+  const onDone = useCallback(() => setGo(true), []);
   return (
-    <header className="section-header" ref={ref as never} id={id}>
-      <LogLine cmd={cmd} path={path} result={result} level={level} />
-      <Tag className="section-title" aria-label={title}>
-        {words.map((w, i) => (
-          <Fragment key={i}>
-            <span className="word" aria-hidden="true">
-              <span style={{ transitionDelay: `${180 + i * 60}ms` }}>{w}</span>
-            </span>
-            {i < words.length - 1 && ' '}
-          </Fragment>
-        ))}
+    <header className="section-header">
+      <LogLine cmd={cmd} path={path} result={result} level={level} onDone={onDone} />
+      <Tag className="section-title" id={id}>
+        <SplitText text={title} play={go} stagger={22} />
+        {dot && <span className={`section-title__dot ${go ? 'is-in' : ''}`} aria-hidden="true">.</span>}
+        {count !== undefined && <sup className="mono section-title__count">{String(count).padStart(2, '0')}</sup>}
       </Tag>
-      {children && <div className="section-lede">{children}</div>}
+      {children && <div className={`section-lede ${go ? 'is-in' : ''}`}>{children}</div>}
     </header>
   );
 }

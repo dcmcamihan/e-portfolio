@@ -13,7 +13,9 @@ export const profile = {
   location: 'Davao City',
   coords: '7.07°N 125.61°E',
   timezone: 'Asia/Manila',
-  roles: ['front-end developer', 'full-stack developer', 'AI integrations', 'UI/UX design'],
+  // ③ word list, taken from the four services
+  roles: ['web apps', 'dashboards', 'AI tools', 'landing pages', 'interfaces'],
+  whoami: 'Computer Science student who builds responsive, accessible interfaces and the backends behind them.',
   summary:
     'Front-end and full-stack developer building responsive, accessible web applications with React, TypeScript, Node.js and FastAPI, with research experience in applied machine learning.',
   languages: ['English', 'Filipino', 'Cebuano'],
@@ -54,23 +56,23 @@ export const skills = {
 };
 
 export type Commit = {
-  hash: string;
-  type: 'init' | 'feat' | 'fix' | 'HEAD';
-  message: string;
+  ref: string;
+  title: string;
   where: string;
   when: string;
+  body: string;
   notes: string[];
   head?: boolean;
 };
 
-// Commit history, oldest first. Hashes are decorative.
+// Design System §07 / wireframe 2g: three commits, drawn oldest to newest (storyboard ⑬).
 export const journey: Commit[] = [
   {
-    hash: 'a1c03d2',
-    type: 'init',
-    message: 'STEM strand',
-    where: 'Davao City National High School (DCNHS)',
-    when: 'Completed July 2023',
+    ref: 'init',
+    title: 'init: STEM strand, DCNHS',
+    where: 'Davao City National High School',
+    when: '–2023',
+    body: 'Science, Technology, Engineering and Mathematics strand, completed July 2023.',
     notes: [
       'Consistent honor student',
       '2nd place, Best Research — Cluster I Research Congress, 2023',
@@ -78,44 +80,27 @@ export const journey: Commit[] = [
     ],
   },
   {
-    hash: 'b7e41f0',
-    type: 'feat',
-    message: 'BS Computer Science',
-    where: 'Mapúa Malayan Colleges of Mindanao (MMCM)',
-    when: 'Aug 2023 – present',
+    ref: 'merge: cs',
+    title: 'feat: BS Computer Science, MMCM',
+    where: 'Mapúa Malayan Colleges of Mindanao',
+    when: '2023–',
+    body: "ChatSafe, AI Image Detector, Jolen's Bicycle Supply, SeGlo-12.",
     notes: [
-      "President's Lister — Term 2 2024–2025, Term 2 2025–2026, Term 3 2025–2026",
+      "President's Lister — Term 2 2024–25, Term 2 2025–26, Term 3 2025–26",
       "Dean's Lister, 2023–2026",
-      'Thesis: ChatSafe, a translate-then-classify cyberbullying detection pipeline',
+      'SeGlo-12 accepted at ICSTE 2025; three ChatSafe papers accepted at CCCIS 2026',
     ],
   },
   {
-    hash: 'c94a0be',
-    type: 'feat',
-    message: 'Research published and accepted',
-    where: 'ICSTE 2025 (Springer LNEE) · CCCIS 2026',
-    when: '2025 – 2026',
-    notes: ['SeGlo-12 paper accepted at ICSTE 2025', 'Three ChatSafe papers accepted at CCCIS 2026'],
-  },
-  {
-    hash: 'd20f5c7',
-    type: 'feat',
-    message: 'Desktop Support Intern, IT Department',
-    where: 'ANFLO Management and Investment Corporation (ANFLOCOR)',
-    when: 'Aug – Oct 2026',
+    ref: 'HEAD → main · 2026',
+    title: 'release: IT Intern, ANFLOCOR · freelance',
+    where: 'ANFLO Management and Investment Corporation · Davao City',
+    when: 'Aug–Oct 2026 · now',
+    body: 'Front-end / full-stack work for clients: websites, web apps, AI integrations, UI/UX.',
     notes: [
-      'Set up workstations and installed and configured software for staff across departments',
-      'Diagnosed hardware, software, printer and connectivity issues; escalated when needed',
-      'Kept equipment inventory records and asset documentation current',
+      'Desktop Support Intern, IT Department: workstation setup, software installs, printer and connectivity fixes, equipment inventory',
+      'Open for freelance projects and full-time roles',
     ],
-  },
-  {
-    hash: 'e5b8a19',
-    type: 'HEAD',
-    message: 'Open for freelance and full-time work',
-    where: 'Davao City · remote',
-    when: 'Now',
-    notes: ['Websites, web apps and dashboards, AI integrations, UI/UX design'],
     head: true,
   },
 ];
@@ -127,18 +112,20 @@ export type Badge = {
   date: string;
   img: string;
   verify: string;
+  /** One of the six stickers (Design System §08 / wireframe 2h). */
+  featured?: boolean;
 };
 
 export const badges: Badge[] = [
-  { id: 'aws-ai', name: 'AWS Certified AI Practitioner', issuer: 'Amazon Web Services', date: 'May 2026', img: 'badges/aws-certified-ai-practitioner.png', verify: 'https://www.credly.com/badges/9304d89b-2003-441f-bb92-4d98bfac9a69/public_url' },
-  { id: 'it-specialist', name: 'IT Specialist — Data Analytics', issuer: 'Certiport / Pearson VUE', date: 'Oct 2025', img: 'badges/it-specialist-data-analytics.png', verify: 'https://www.credly.com/badges/c6b162ec-c12e-4f9f-8766-920113a2da02/public_url' },
-  { id: 'mos', name: 'Microsoft Office Specialist: Excel Associate', issuer: 'Microsoft', date: 'Sep 2023', img: 'badges/microsoft-office-specialist-excel-associate-office-2019.png', verify: 'https://www.credly.com/badges/2bf0c71f-9631-4c9d-be2f-04580e31c951/public_url' },
+  { id: 'aws-ai', featured: true, name: 'AWS Certified AI Practitioner', issuer: 'Amazon Web Services', date: 'May 2026', img: 'badges/aws-certified-ai-practitioner.png', verify: 'https://www.credly.com/badges/9304d89b-2003-441f-bb92-4d98bfac9a69/public_url' },
+  { id: 'it-specialist', featured: true, name: 'IT Specialist — Data Analytics', issuer: 'Certiport / Pearson VUE', date: 'Oct 2025', img: 'badges/it-specialist-data-analytics.png', verify: 'https://www.credly.com/badges/c6b162ec-c12e-4f9f-8766-920113a2da02/public_url' },
+  { id: 'mos', featured: true, name: 'Microsoft Office Specialist: Excel Associate', issuer: 'Microsoft', date: 'Sep 2023', img: 'badges/microsoft-office-specialist-excel-associate-office-2019.png', verify: 'https://www.credly.com/badges/2bf0c71f-9631-4c9d-be2f-04580e31c951/public_url' },
   { id: 'aws-genai', name: 'AWS Academy Graduate — Generative AI Foundations', issuer: 'Amazon Web Services', date: 'Jan 2026', img: 'badges/aws-academy-graduate-generative-ai-foundations-trai.png', verify: 'https://www.credly.com/badges/bdc8b3cd-041f-46ba-8eaf-860282f8f206/public_url' },
-  { id: 'aws-cloud', name: 'AWS Academy Graduate — Cloud Foundations', issuer: 'Amazon Web Services', date: 'Oct 2025', img: 'badges/aws-academy-graduate-cloud-foundations-training-bad.png', verify: 'https://www.credly.com/badges/2e9a37f4-ff31-49de-a867-b7f0d8c0d389/public_url' },
+  { id: 'aws-cloud', featured: true, name: 'AWS Academy Graduate — Cloud Foundations', issuer: 'Amazon Web Services', date: 'Oct 2025', img: 'badges/aws-academy-graduate-cloud-foundations-training-bad.png', verify: 'https://www.credly.com/badges/2e9a37f4-ff31-49de-a867-b7f0d8c0d389/public_url' },
   { id: 'aws-arch', name: 'AWS Academy Graduate — Cloud Architecting', issuer: 'Amazon Web Services', date: 'May 2026', img: 'badges/aws-academy-graduate-cloud-architecting-training-ba.png', verify: 'https://www.credly.com/badges/b6272527-99dc-4cff-a8fa-2168cd19ee18/public_url' },
   // TODO: add the earned date for Data Science Orientation (not on the resume).
-  { id: 'ds', name: 'Data Science Orientation', issuer: 'IBM (via Coursera)', date: '', img: 'badges/data-science-orientation.png', verify: 'https://www.credly.com/badges/10b09b74-8149-4701-89f9-e046db2ab2cf/public_url' },
-  { id: 'cisco', name: 'Introduction to Cybersecurity', issuer: 'Cisco Networking Academy', date: 'Feb 2026', img: 'badges/introduction-to-cybersecurity.png', verify: 'https://www.credly.com/badges/b1fcd339-b65b-456a-a777-54eb6ad5612f/public_url' },
+  { id: 'ds', featured: true, name: 'Data Science Orientation', issuer: 'IBM (via Coursera)', date: '', img: 'badges/data-science-orientation.png', verify: 'https://www.credly.com/badges/10b09b74-8149-4701-89f9-e046db2ab2cf/public_url' },
+  { id: 'cisco', featured: true, name: 'Introduction to Cybersecurity', issuer: 'Cisco Networking Academy', date: 'Feb 2026', img: 'badges/introduction-to-cybersecurity.png', verify: 'https://www.credly.com/badges/b1fcd339-b65b-456a-a777-54eb6ad5612f/public_url' },
 ];
 
 export const hciCourses = [
@@ -159,6 +146,9 @@ export type Publication = {
   status: string;
   authors: string;
   project?: string;
+  /** Short summary shown when the row expands (wireframe 1i). */
+  abstract: string;
+  figure?: { src: string; alt: string };
 };
 
 export const publications: Publication[] = [
@@ -170,6 +160,8 @@ export const publications: Publication[] = [
     status: 'Accepted',
     authors: 'Amihan, D. C. M. C., et al.',
     project: 'chatsafe',
+    abstract: 'Compares SVM, mBERT, XLM-RoBERTa Base, XLM-RoBERTa Large and HateBERT on Filipino text after it has been translated to English. HateBERT reaches the highest Filipino Macro-F1 (0.6780) with the smallest cross-lingual drop (9.2%).',
+    figure: { src: 'img/fig-translation-engines.webp', alt: 'Figure from the ChatSafe study comparing translation engines' },
   },
   {
     id: 'BS1036',
@@ -179,6 +171,7 @@ export const publications: Publication[] = [
     status: 'Accepted',
     authors: 'Amihan, D. C. M. C., et al.',
     project: 'chatsafe',
+    abstract: 'Evaluates the deployed ChatSafe pipeline end to end on a purpose-built gold-standard set (Macro-F1 0.7044) and ablates the translation layer to measure how much it contributes.',
   },
   {
     id: 'BS1037',
@@ -188,6 +181,7 @@ export const publications: Publication[] = [
     status: 'Accepted',
     authors: 'Amihan, D. C. M. C., et al.',
     project: 'chatsafe',
+    abstract: "Validates the pipeline against three licensed psychology professionals using an Expert Labeling Protocol: substantial inter-expert agreement (Fleiss' kappa 0.7245) and moderate pipeline-to-expert agreement (Cohen's kappa 0.4222), falling to near chance without translation.",
   },
   {
     id: 'NT1009',
@@ -197,6 +191,8 @@ export const publications: Publication[] = [
     status: 'Accepted',
     authors: 'Cerna, P. D., Lungay, C. R. A., Amihan, D. C. M. C., Alalim, H. V. D., Lisondra, C. B.',
     project: 'seglo-12',
+    abstract: 'A dual-mode ASL translator: a flex-sensor and gyroscope glove for rule-based static signs, and a MediaPipe + TensorFlow Lite camera mode, both in one offline Android app. The vision module reached 87% accuracy (macro-F1 0.86) over 38 classes; beta testers rated it 4.51/5.',
+    figure: { src: 'img/seglo-glove.webp', alt: 'SeGlo-12 glove prototype' },
   },
   {
     id: 'THESIS',
@@ -206,6 +202,7 @@ export const publications: Publication[] = [
     status: 'Approved, June 2026',
     authors: 'Amihan, D. C. M. C., Alovera, J. L. S., Monteverde, I. M. C.',
     project: 'chatsafe',
+    abstract: 'Curates a 213,090-instance English training corpus and a 13,724-instance Filipino evaluation corpus, selects HateBERT among five models, and shows through expert validation and ablation that translation is the component the pipeline depends on.',
   },
   {
     id: 'AID',
@@ -215,5 +212,6 @@ export const publications: Publication[] = [
     status: 'Manuscript',
     authors: 'Amihan, D. C. M. C., Monteverde, I. M. C., Yncierto, J. H. R.',
     project: 'ai-image-detector',
+    abstract: 'A Swin Transformer Tiny model fine-tuned on multi-source data to detect images from seven generators, with temperature scaling and threshold tuning for calibrated confidence and Grad-CAM to show which regions drove each decision.',
   },
 ];

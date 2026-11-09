@@ -1,52 +1,100 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { Project } from '../data/projects';
-import { PromoVideo } from './PromoVideo';
+import { PromoVideo, type PromoVideoHandle } from './PromoVideo';
 import { TLink } from '../lib/transition';
-import { prefersReducedMotion } from '../lib/hooks';
+import { asset, useMediaQuery, useReducedMotion } from '../lib/hooks';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** ⑤ project stack: sticky cards, each pushed back and dimmed as the next one slides over it. */
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * ⑤ scroll-pinned project stack (home). 100vh of scroll per card: the next card slides up,
+ * the one beneath scales to 0.94, dims and pauses. Only the front card plays its loop.
+ * Mobile: plain vertical cards, tap to play. Reduced motion: static list of poster frames.
+ */
 export function ProjectStack({ items }: { items: Project[] }) {
-  const ref = useRef<HTMLOListElement>(null);
+  const reduce = useReducedMotion();
+  const mobile = useMediaQuery('(max-width: 900px)');
+  const pin = useRef<HTMLDivElement>(null);
+  const [front, setFront] = useState(0);
+  const n = items.length;
+
   useEffect(() => {
-    if (!ref.current || prefersReducedMotion()) return;
+    if (reduce || mobile || !pin.current) return;
     const ctx = gsap.context(() => {
       const cards = gsap.utils.toArray<HTMLElement>('.stack__card');
-      cards.forEach((card, i) => {
-        if (i === cards.length - 1) return;
-        gsap.to(card.querySelector('.stack__inner'), {
-          scale: 0.92,
-          filter: 'brightness(0.55)',
-          ease: 'none',
-          scrollTrigger: { trigger: cards[i + 1], start: 'top bottom', end: 'top 15%', scrub: true },
-        });
+      gsap.set(cards.slice(1), { yPercent: 110 });
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          trigger: pin.current,
+          start: 'top top',
+          end: `+=${(n - 1) * 100}%`,
+          pin: true,
+          scrub: 0.6,
+          onUpdate: (st) => setFront(Math.min(n - 1, Math.round(st.progress * (n - 1)))),
+        },
       });
-    }, ref);
+      cards.forEach((card, i) => {
+        if (i === 0) return;
+        tl.to(card, { yPercent: 0, duration: 1 }, i - 1);
+        tl.to(cards[i - 1], { scale: 0.94, filter: 'brightness(0.45)', duration: 1 }, i - 1);
+      });
+    }, pin);
     return () => ctx.revert();
-  }, []);
+  }, [reduce, mobile, n]);
+
+  if (reduce || mobile) {
+    return (
+      <ol className="stack-list">
+        {items.map((p, i) => <StackCard key={p.slug} p={p} i={i} n={n} front={!reduce} tapToPlay={mobile && !reduce} still={reduce} />)}
+      </ol>
+    );
+  }
 
   return (
-    <ol className="stack" ref={ref}>
-      {items.map((p, i) => (
-        <li className="stack__card" key={p.slug} style={{ top: `calc(88px + ${i * 14}px)` }}>
-          <article className="stack__inner">
-            <TLink to={`/work/${p.slug}`} className="stack__media" data-cursor="play" aria-label={`${p.name} case study`}>
-              <PromoVideo src={p.video.loop} poster={p.video.poster} label={`${p.name} promo loop`} />
-            </TLink>
-            <div className="stack__body">
-              <p className="mono muted">0{i + 1} · {p.year}</p>
-              <h3>{p.name}</h3>
-              <p className="stack__short">{p.short}</p>
-              <p className="muted">{p.summary}</p>
-              <ul className="chips" aria-label="Stack">{p.stack.slice(0, 5).map((s) => <li key={s}>{s}</li>)}</ul>
-              <TLink to={`/work/${p.slug}`} className="link-arrow" data-cursor="view">Read case study <span aria-hidden="true">→</span></TLink>
-            </div>
-          </article>
-        </li>
-      ))}
-    </ol>
+    <div className="stack" ref={pin}>
+      <ol className="stack__deck">
+        {items.map((p, i) => (
+          <li className="stack__card" key={p.slug} style={{ zIndex: i + 1 }}>
+            <StackCard p={p} i={i} n={n} front={i === front} />
+          </li>
+        ))}
+      </ol>
+      <p className="stack__counter mono" aria-hidden="true"><span className="accent">{pad(front + 1)}</span> / {pad(n)}</p>
+    </div>
+  );
+}
+
+function StackCard({ p, i, n, front, tapToPlay = false, still = false }: { p: Project; i: number; n: number; front: boolean; tapToPlay?: boolean; still?: boolean }) {
+  const vid = useRef<PromoVideoHandle>(null);
+  const Wrapper = tapToPlay || still ? 'li' : 'div';
+  return (
+    <Wrapper className="stack__inner">
+      <div className="stack__body">
+        <p className="label">{pad(i + 1)} · {p.categories.join(' / ')}</p>
+        <h3 className="stack__name">{p.name}</h3>
+        <p className="stack__short">{p.short}</p>
+        <p className="muted">{p.year} · {p.stackLine}</p>
+        <TLink to={`/work/${p.slug}`} className="link-arrow" data-cursor="view">Read case <span aria-hidden="true">→</span></TLink>
+        <p className="label stack__of" aria-hidden="true">{pad(i + 1)} / {pad(n)}</p>
+      </div>
+      <div className="stack__media">
+        {still ? (
+          <img src={asset(p.video.poster)} alt={`${p.name} promo poster`} loading="lazy" decoding="async" />
+        ) : tapToPlay ? (
+          <button type="button" className="stack__tap" onClick={() => vid.current?.toggle()} aria-label={`Play ${p.name} promo`}>
+            <PromoVideo ref={vid} src={p.video.loop} poster={p.video.poster} label={`${p.name} promo loop`} autoplay={false} />
+          </button>
+        ) : (
+          <TLink to={`/work/${p.slug}`} aria-label={`${p.name} case study`} tabIndex={-1}>
+            <PromoVideo src={p.video.loop} poster={p.video.poster} label={`${p.name} promo loop`} active={front} />
+          </TLink>
+        )}
+      </div>
+    </Wrapper>
   );
 }

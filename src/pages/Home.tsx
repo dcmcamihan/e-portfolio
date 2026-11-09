@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { DitherField } from '../components/DitherField';
-import { LogLine } from '../components/LogLine';
 import { SectionHeader } from '../components/SectionHeader';
+import { SplitText } from '../components/SplitText';
 import { RotatingRole } from '../components/RotatingRole';
 import { ProjectStack } from '../components/ProjectStack';
+import { CommitGraph } from '../components/CommitGraph';
+import { StickerBoard } from '../components/StickerBoard';
 import { whenBooted } from '../components/Preloader';
-import { profile, services } from '../data/site';
+import { badges, journey, profile, services } from '../data/site';
 import { projects } from '../data/projects';
 import { TLink } from '../lib/transition';
 import { asset, prefersReducedMotion, useClock } from '../lib/hooks';
@@ -15,103 +17,101 @@ import { useTitle } from '../lib/useTitle';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const SERVICE_TAGS = ['Web', 'App', 'AI', 'UX'];
+
 export default function Home() {
   useTitle();
   const hero = useRef<HTMLElement>(null);
-  const time = useClock(profile.timezone, true);
+  const cutout = useRef<HTMLImageElement>(null);
+  const time = useClock(profile.timezone);
+  const [play, setPlay] = useState(false);
+  const featured = badges.filter((b) => b.featured);
 
-  // ② split name: halves slide in from opposite sides, then drift apart on scroll to reveal the cutout.
+  // ② name reveal after the preloader wipe; scroll drift ±40px; cursor parallax (you 8, field 24, name −12).
+  useEffect(() => whenBooted(() => setPlay(true)), []);
   useEffect(() => {
     const el = hero.current;
-    if (!el) return;
-    if (prefersReducedMotion()) { el.classList.add('is-in'); return; }
-    let ctx: gsap.Context | undefined;
-    const stop = whenBooted(() => {
-      ctx = gsap.context(() => {
-        const tl = gsap.timeline({ defaults: { ease: 'expo.out', duration: 1.2 } });
-        tl.from('.hero__first .line > span', { xPercent: -110, stagger: 0.06 })
-          .from('.hero__last .line > span', { xPercent: 110, stagger: 0.06 }, '<0.08')
-          .from('.hero__photo', { opacity: 0, y: 40, scale: 0.96, duration: 1.4 }, '<0.1')
-          .from('.hero__meta > *', { opacity: 0, y: 14, stagger: 0.07, duration: 0.8 }, '<0.35')
-          .add(() => el.classList.add('is-in'));
-        gsap.to('.hero__first', { xPercent: -14, ease: 'none', scrollTrigger: { trigger: el, start: 'top top', end: 'bottom top', scrub: true } });
-        gsap.to('.hero__last', { xPercent: 14, ease: 'none', scrollTrigger: { trigger: el, start: 'top top', end: 'bottom top', scrub: true } });
-        gsap.to('.hero__photo', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: el, start: 'top top', end: 'bottom top', scrub: true } });
-      }, el);
-    });
-    return () => { stop(); ctx?.revert(); };
+    if (!el || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      const st = { trigger: el, start: 'top top', end: 'bottom top', scrub: true };
+      gsap.to('.hero__line--1', { x: -40, ease: 'none', scrollTrigger: st });
+      gsap.to('.hero__line--2', { x: 40, ease: 'none', scrollTrigger: st });
+    }, el);
+    const move = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      const nx = e.clientX / innerWidth - 0.5, ny = e.clientY / innerHeight - 0.5;
+      el.style.setProperty('--px', nx.toFixed(3));
+      el.style.setProperty('--py', ny.toFixed(3));
+    };
+    addEventListener('pointermove', move, { passive: true });
+    return () => { ctx.revert(); removeEventListener('pointermove', move); };
   }, []);
 
   return (
     <>
-      <section className="hero" ref={hero} aria-labelledby="hero-name">
-        <DitherField className="hero__dither" />
+      <section className={`hero ${play ? 'is-in' : ''}`} ref={hero} aria-labelledby="hero-name">
+        <div className="hero__field"><DitherField maskRef={cutout} /></div>
         <div className="hero__photo">
-          <img src={asset('img/hero.webp')} alt="Dianna Claire Marie Amihan" width={900} height={1479} {...{ fetchpriority: 'high' }} decoding="async" />
+          <img ref={cutout} src={asset('img/hero.webp')} alt="" width={900} height={1479} decoding="async" {...{ fetchpriority: 'high' }} />
         </div>
-        <h1 id="hero-name" className="hero__name" aria-label={profile.name}>
-          <span className="hero__first" aria-hidden="true">
-            <span className="line"><span>Dianna</span></span>
-            <span className="line"><span>Claire</span></span>
-          </span>
-          <span className="hero__last" aria-hidden="true">
-            <span className="line"><span>Marie</span></span>
-            <span className="line"><span>Amihan</span></span>
+
+        <div className="hero__meta wrap label">
+          <span>Davao City, PH<br />{profile.coords}</span>
+          <span className="hero__whoami"><span className="accent">~ $</span> whoami</span>
+          <span className="right">Local time<br />{time} GMT+8</span>
+        </div>
+
+        <h1 id="hero-name" className="hero__name wrap" aria-label={profile.name}>
+          <span className="hero__line hero__line--1"><SplitText text={profile.first} play={play} /></span>
+          <span className="hero__line hero__line--2">
+            <SplitText text={profile.last} play={play} delay={60} from="right" />
+            <span className="caret hero__caret" aria-hidden="true" />
           </span>
         </h1>
-        <div className="hero__meta wrap">
-          <LogLine cmd="whoami" result="developer" level="OK" animate={false} />
-          <p className="hero__role">
-            <RotatingRole roles={profile.roles} />
-          </p>
-          <p className="hero__stamp mono">
-            {profile.location} · {profile.coords} · <time aria-label="Local time in Davao City">{time}</time> PHT
-          </p>
-          <div className="hero__cta">
-            <TLink to="/contact" className="btn" data-cursor="view">Start a project</TLink>
-            <TLink to="/work" className="btn btn--ghost" data-cursor="view">See the work</TLink>
+
+        <div className="hero__foot wrap">
+          <div className="hero__intro">
+            <p className="hero__role"><RotatingRole words={profile.roles} /></p>
+            <p className="hero__lede">Front-end and full-stack developer in Davao City. Websites, web apps and dashboards, AI integrations and UI/UX for clients and teams.</p>
           </div>
+          <TLink to="/contact" className="btn btn--lg" data-magnetic>
+            <span data-magnetic-label>Start a project →</span>
+          </TLink>
         </div>
-        <p className="hero__scroll mono" aria-hidden="true">scroll ↓</p>
-      </section>
-
-      <section className="section wrap" id="intro">
-        <p className="intro">
-          I build websites, web apps and dashboards for small businesses and teams, and I connect AI models to products that people can actually use. {' '}
-          <span className="muted">Computer Science at Mapúa Malayan Colleges of Mindanao, with published research in applied machine learning.</span>
-        </p>
-      </section>
-
-      <section className="section wrap" id="work" aria-labelledby="h-featured">
-        <SectionHeader cmd="ls --featured" path="~/work" result={`${projects.length} projects`} title="Selected work" id="h-featured">
-          <p>Four projects, each with the promo cut first and the case study one click away.</p>
-        </SectionHeader>
-        <ProjectStack items={projects} />
-        <p className="center"><TLink to="/work" className="link-arrow">Open the work index <span aria-hidden="true">→</span></TLink></p>
       </section>
 
       <section className="section wrap" id="services" aria-labelledby="h-services">
-        <SectionHeader cmd="cat services.md" path="~" result="4 services" title="What I can build for you" />
-        <ol className="services">
+        <SectionHeader cmd="cat services.md" result="4 sections" title="What I build" id="h-services" />
+        <ol className="cap-grid">
           {services.map((s, i) => (
-            <li key={s.id} className="service">
-              <p className="mono muted">0{i + 1}</p>
+            <li key={s.id} className="cap">
+              <p className="label accent">#{String(i + 1).padStart(2, '0')} · {SERVICE_TAGS[i]}</p>
               <h3>{s.title}</h3>
               <p>{s.body}</p>
-              <ul className="chips">{s.stack.map((t) => <li key={t}>{t}</li>)}</ul>
+              <p className="label muted">{s.stack.join(' · ')}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="section wrap cta" aria-labelledby="h-cta">
-        <SectionHeader cmd="mail --to dianna" path="~" result="inbox open" title="Have a project in mind?" id="h-cta">
-          <p>Tell me what you need, your timeline and your budget range, and I will reply by email.</p>
-        </SectionHeader>
-        <div className="cta__actions">
-          <TLink to="/contact" className="btn btn--lg" data-cursor="view">Write a brief</TLink>
-          <a className="btn btn--ghost btn--lg" href={`mailto:${profile.email}`}>{profile.email}</a>
+      <section className="section section--stack" id="work" aria-labelledby="h-featured">
+        <div className="wrap">
+          <SectionHeader cmd="ls --featured" path="~/work" result={`${projects.length} entries`} title="Selected work" dot id="h-featured" />
         </div>
+        <div className="wrap"><ProjectStack items={projects} /></div>
+        <p className="wrap stack__all"><TLink to="/work" className="link-arrow" data-cursor="view">All work ({projects.length}) <span aria-hidden="true">→</span></TLink></p>
+      </section>
+
+      <section className="section wrap" id="journey" aria-labelledby="h-journey">
+        <SectionHeader cmd="git log --oneline --graph" path="~/journey" result={`${journey.length} commits`} title="Journey" id="h-journey" />
+        <CommitGraph commits={journey} photo={false} />
+        <p className="stack__all"><TLink to="/about" className="link-arrow">More about me <span aria-hidden="true">→</span></TLink></p>
+      </section>
+
+      <section className="section wrap" id="certs" aria-labelledby="h-certs">
+        <SectionHeader cmd="ls" path="~/certs" result={`${featured.length} badges`} title="Certified" id="h-certs" />
+        <StickerBoard badges={featured} />
+        <p className="stack__all"><TLink to="/certifications" className="link-arrow">All certifications and trainings <span aria-hidden="true">→</span></TLink></p>
       </section>
     </>
   );

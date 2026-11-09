@@ -1,138 +1,158 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Project } from '../data/projects';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { categories, type Category, type Project } from '../data/projects';
 import { PromoVideo } from './PromoVideo';
-import { TLink } from '../lib/transition';
-import { useMediaQuery, useReducedMotion } from '../lib/hooks';
+import { TLink, useGo } from '../lib/transition';
+import { asset, useMediaQuery, useReducedMotion } from '../lib/hooks';
+import { useInViewOnce } from '../lib/useInView';
 
-/** ⑪ 3D promo carousel: cards on a curved arc; drag, arrows, ← → and Enter. The front card plays its loop. */
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * ⑪ 3D promo carousel (Design System §05). Cards 38° apart on a perspective ring,
+ * side cards at 45% opacity showing the poster and playing on hover; the front card plays.
+ * Drag rotates 1:1 and snaps to the nearest card; ← → keys; click a side card to bring it
+ * forward, click the front card to open the case (⑦). Filters rebuild the ring.
+ * Enter: cards fly in from z −600 with an 80ms stagger. Reduced motion: flat row of posters.
+ */
 export function Carousel3D({ items }: { items: Project[] }) {
-  const n = items.length;
-  const [index, setIndex] = useState(0);
-  const [drag, setDrag] = useState(0);
   const reduce = useReducedMotion();
   const narrow = useMediaQuery('(max-width: 720px)');
+  const go = useGo();
+  const [filter, setFilter] = useState<Category | 'All'>('All');
+  const list = useMemo(() => (filter === 'All' ? items : items.filter((p) => p.categories.includes(filter))), [items, filter]);
+  const n = list.length;
+  const [index, setIndex] = useState(0);
+  const [drag, setDrag] = useState(0);
+  const [rebuild, setRebuild] = useState(0);
   const stage = useRef<HTMLDivElement>(null);
+  const entered = useInViewOnce(stage, 0.25);
   const start = useRef<{ x: number; moved: boolean } | null>(null);
-  const width = narrow ? 300 : 620;
+  const spread = narrow ? 230 : 420;
 
   const goTo = useCallback((i: number) => setIndex(((i % n) + n) % n), [n]);
+  useEffect(() => { setIndex(0); setRebuild((r) => r + 1); }, [filter]);
 
-  useEffect(() => {
-    const el = stage.current;
-    if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 20) return;
-      e.preventDefault();
-      goTo(index + (e.deltaX > 0 ? 1 : -1));
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, [goTo, index]);
+  const active = list[index];
+  const counts = useMemo(() => Object.fromEntries(categories.map((c) => [c, items.filter((p) => p.categories.includes(c)).length])), [items]);
 
-  const dragSteps = drag / width;
-  const active = items[index];
+  const filters = (
+    <div className="chip-row" role="group" aria-label="Filter projects">
+      {(['All', ...categories] as const).map((c) => (
+        <button key={c} type="button" className={`chip ${filter === c ? 'is-on' : ''}`} aria-pressed={filter === c} onClick={() => setFilter(c)}>
+          {c} {pad(c === 'All' ? items.length : counts[c])}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (reduce) {
+    return (
+      <>
+        {filters}
+        <ul className="carousel-flat">
+          {list.map((p, i) => (
+            <li key={p.slug}>
+              <TLink to={`/work/${p.slug}`}>
+                <img src={asset(p.video.poster)} alt="" loading="lazy" />
+                <span className="label"><span className="accent">{pad(i + 1)}</span> {p.name}</span>
+                <span className="label muted">{p.stackLine}</span>
+              </TLink>
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+  }
+
+  const dragSteps = drag / spread;
 
   return (
     <div className="carousel">
+      {filters}
       <div
-        className={`carousel__stage ${reduce ? 'is-flat' : ''}`}
+        className="carousel__stage"
         ref={stage}
         data-cursor="drag"
         role="region"
         aria-roledescription="carousel"
-        aria-label="Projects"
+        aria-label={`Projects, ${active?.name} in front`}
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') { e.preventDefault(); goTo(index + 1); }
           if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(index - 1); }
+          if (e.key === 'Enter' && e.target === e.currentTarget && active) { e.preventDefault(); go(`/work/${active.slug}`); }
         }}
         onPointerDown={(e) => {
-          if ((e.target as HTMLElement).closest('a')) { start.current = { x: e.clientX, moved: false }; return; }
           start.current = { x: e.clientX, moved: false };
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
           if (!start.current) return;
           const dx = e.clientX - start.current.x;
-          if (Math.abs(dx) > 6) start.current.moved = true;
+          if (!start.current.moved && Math.abs(dx) > 6) {
+            start.current.moved = true;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }
           if (start.current.moved) setDrag(dx);
         }}
         onPointerUp={() => {
           if (!start.current) return;
-          if (start.current.moved) goTo(index - Math.round(drag / (width * 0.6)));
-          start.current = null;
+          if (start.current.moved) goTo(index - Math.round(drag / spread));
+          window.setTimeout(() => { start.current = null; }, 0);
           setDrag(0);
         }}
         onPointerCancel={() => { start.current = null; setDrag(0); }}
-        onClickCapture={(e) => { if (start.current?.moved) { e.preventDefault(); e.stopPropagation(); } }}
       >
-        {reduce ? (
-          <div className="carousel__flat">
-            <Card p={active} front />
-          </div>
-        ) : (
-          <div className="carousel__ring">
-            {items.map((p, i) => {
-              let d = i - index;
-              if (d > n / 2) d -= n;
-              if (d < -n / 2) d += n;
-              const f = d + dragSteps;
-              const front = d === 0;
-              const a = Math.abs(f);
-              return (
-                <div
-                  key={p.slug}
-                  className={`carousel__slot ${front ? 'is-front' : ''}`}
-                  style={{
-                    transform: `translateX(${f * (narrow ? 70 : 62)}%) translateZ(${-a * (narrow ? 180 : 280)}px) rotateY(${f * 34}deg)`,
-                    opacity: a > 1.6 ? 0 : 1 - a * 0.35,
-                    zIndex: 10 - Math.round(a * 2),
-                    transition: drag ? 'none' : undefined,
-                    pointerEvents: a > 1.6 ? 'none' : undefined,
-                  }}
-                  aria-hidden={!front}
-                  onClick={() => { if (!front) goTo(i); }}
-                >
-                  <Card p={p} front={front} />
+        <p className="carousel__log label" aria-hidden="true">{pad(index + 1)} / {pad(n)}</p>
+        <div className="carousel__ring" key={rebuild}>
+          {list.map((p, i) => {
+            let d = i - index;
+            if (d > n / 2) d -= n;
+            if (d < -n / 2) d += n;
+            const f = d - dragSteps;
+            const isFront = d === 0;
+            const a = Math.abs(f);
+            return (
+              <div
+                key={p.slug}
+                className={`carousel__card ${isFront ? 'is-front' : ''} ${entered ? 'is-in' : ''}`}
+                style={{
+                  transform: `translateX(${f * spread}px) translateZ(${-a * 260}px) rotateY(${-f * 38}deg)`,
+                  opacity: a < 0.5 ? 1 : a > 2.2 ? 0 : 0.45,
+                  zIndex: 10 - Math.round(a),
+                  transition: drag ? 'none' : undefined,
+                  transitionDelay: entered ? undefined : `${i * 80}ms`,
+                  ['--enter-delay' as string]: `${i * 80}ms`,
+                }}
+                aria-hidden={!isFront}
+                data-cursor={isFront ? 'view' : 'play'}
+                onClick={() => {
+                  if (start.current?.moved) return;
+                  if (isFront) go(`/work/${p.slug}`); else goTo(i);
+                }}
+              >
+                <div className="carousel__media">
+                  <PromoVideo src={p.video.loop} poster={p.video.poster} label={`${p.name} promo`} active={isFront} hoverPlay={!isFront} />
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="carousel__meta label">
+                  <span><span className="accent">{pad(i + 1)}</span> {p.name.toUpperCase()}</span>
+                  <span className="muted">{p.stackLine}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="carousel__controls">
-        <button type="button" className="btn btn--ghost mono" onClick={() => goTo(index - 1)} aria-label="Previous project">←</button>
-        <p className="mono carousel__count" aria-live="polite">
-          <span className="accent">{String(index + 1).padStart(2, '0')}</span> / {String(n).padStart(2, '0')} · {active.name}
+        <div className="carousel__arrows">
+          <button type="button" className="round-btn" onClick={() => goTo(index - 1)} aria-label="Previous project">←</button>
+          <button type="button" className="round-btn" onClick={() => goTo(index + 1)} aria-label="Next project">→</button>
+        </div>
+        <p className="label carousel__count" aria-live="polite">
+          {pad(index + 1)} / {pad(n)} · {active?.name} · {active?.categories.join(' / ')}
         </p>
-        <button type="button" className="btn btn--ghost mono" onClick={() => goTo(index + 1)} aria-label="Next project">→</button>
+        {active && <TLink to={`/work/${active.slug}`} className="label-link">OPEN CASE →</TLink>}
       </div>
-      <ol className="carousel__dots" aria-label="Choose project">
-        {items.map((p, i) => (
-          <li key={p.slug}>
-            <button type="button" aria-label={p.name} aria-current={i === index} onClick={() => goTo(i)} />
-          </li>
-        ))}
-      </ol>
     </div>
-  );
-}
-
-function Card({ p, front }: { p: Project; front: boolean }) {
-  return (
-    <article className="ccard">
-      <div className="ccard__media">
-        <PromoVideo src={p.video.loop} poster={p.video.poster} label={`${p.name} promo loop`} active={front} />
-      </div>
-      <div className="ccard__body">
-        <p className="mono ccard__meta">{p.year} · {p.kind}</p>
-        <h3>{p.name}</h3>
-        <p>{p.short}</p>
-        <TLink to={`/work/${p.slug}`} className="link-arrow" data-cursor="view" tabIndex={front ? 0 : -1}>
-          Read case study <span aria-hidden="true">→</span>
-        </TLink>
-      </div>
-    </article>
   );
 }

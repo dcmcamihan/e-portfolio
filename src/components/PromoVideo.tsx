@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { asset, useReducedMotion } from '../lib/hooks';
 import { useUI } from '../lib/ui';
 
@@ -7,21 +7,40 @@ type Props = {
   src?: string;
   poster: string;
   label: string;
-  /** Play automatically while in view (muted loop). Off for the full cut. */
+  /** Muted loop that runs while visible and `active`. Off for the full cut. */
   autoplay?: boolean;
+  /** Side carousel cards: poster until hovered (⑪). */
+  hoverPlay?: boolean;
   controls?: boolean;
+  captions?: string;
   className?: string;
-  /** Force-pause (e.g. carousel cards that are not in front). */
   active?: boolean;
 };
 
-/** Muted, inline, lazy video. Only one PromoVideo plays at a time; anything off-screen pauses. */
-export function PromoVideo({ src, poster, label, autoplay = true, controls = false, className = '', active = true }: Props) {
+export type PromoVideoHandle = { toggle: () => void };
+
+/**
+ * Muted, inline, lazily loaded promo video. Only one plays at a time (shared slot in UI state);
+ * anything off-screen pauses. Reduced motion: no autoplay, poster only until the visitor presses play.
+ */
+export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVideo(
+  { src, poster, label, autoplay = true, hoverPlay = false, controls = false, captions, className = '', active = true },
+  handle,
+) {
   const id = useId();
   const ref = useRef<HTMLVideoElement>(null);
   const { playing, setPlaying } = useUI();
   const reduce = useReducedMotion();
   const [inView, setInView] = useState(false);
+  const [hover, setHover] = useState(false);
+
+  useImperativeHandle(handle, () => ({
+    toggle: () => {
+      const el = ref.current;
+      if (!el) return;
+      if (playing === id && !el.paused) { el.pause(); setPlaying(null); } else setPlaying(id);
+    },
+  }), [playing, id, setPlaying]);
 
   useEffect(() => {
     const el = ref.current;
@@ -31,24 +50,25 @@ export function PromoVideo({ src, poster, label, autoplay = true, controls = fal
     return () => io.disconnect();
   }, []);
 
-  // Claim the single play slot when this video should run.
+  // Claim or release the single play slot.
   useEffect(() => {
     if (!src || reduce || !autoplay) return;
-    if (inView && active) setPlaying(id);
+    const want = inView && (hoverPlay ? hover : active);
+    if (want) setPlaying(id);
     else if (playing === id) setPlaying(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inView, active, src, reduce, autoplay]);
+  }, [inView, active, hover, hoverPlay, src, reduce, autoplay]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !src) return;
     if (playing === id) {
       if (el.preload === 'none') el.preload = 'auto';
-      el.play().catch(() => { /* autoplay blocked: poster stays */ });
-    } else if (!controls || playing !== null) {
+      el.play().catch(() => { /* blocked: poster stays */ });
+    } else if (!el.paused) {
       el.pause();
     }
-  }, [playing, id, src, controls]);
+  }, [playing, id, src]);
 
   if (!src) {
     return <img className={`promo ${className}`} src={asset(poster)} alt={label} loading="lazy" decoding="async" />;
@@ -60,14 +80,19 @@ export function PromoVideo({ src, poster, label, autoplay = true, controls = fal
       poster={asset(poster)}
       muted
       playsInline
-      loop={autoplay}
+      loop={!controls}
       preload="none"
       controls={controls}
       aria-label={label}
+      data-cursor={controls ? undefined : 'play'}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       onPlay={() => { if (playing !== id) setPlaying(id); }}
+      onPause={() => { if (controls && playing === id) setPlaying(null); }}
     >
       <source src={asset(`${src}.webm`)} type="video/webm" />
       <source src={asset(`${src}.mp4`)} type="video/mp4" />
+      {captions && <track kind="captions" src={asset(captions)} srcLang="en" label="English" default={controls} />}
     </video>
   );
-}
+});
