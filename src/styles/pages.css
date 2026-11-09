@@ -9,7 +9,13 @@
   transform: translate3d(calc(-50% + var(--px) * 8px), calc(var(--py) * 8px), 0);
 }
 .hero__photo img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; filter: grayscale(1) contrast(1.1) brightness(1.15); opacity: 0; }
-/* A1: opacity is driven by the Bayer mask reveal in Home.tsx */
+/* A1: opacity is driven by the Bayer mask reveal in Home.tsx.
+   Hover lens: a hole follows the pointer and the dither field draws the photo as dots inside it. */
+.hero__photo img {
+  --lx: -999px; --ly: -999px; --lr: 0px;
+  -webkit-mask-image: radial-gradient(circle at var(--lx) var(--ly), transparent calc(var(--lr) - 24px), #000 var(--lr));
+  mask-image: radial-gradient(circle at var(--lx) var(--ly), transparent calc(var(--lr) - 24px), #000 var(--lr));
+}
 @media (prefers-reduced-motion: reduce) { .hero__photo img { opacity: 1; } }
 .hero__meta { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-4); padding-top: 84px; color: var(--fg-3); }
 .hero__meta > * { opacity: 0; transition: opacity var(--t-base) var(--ease-out) 600ms; }

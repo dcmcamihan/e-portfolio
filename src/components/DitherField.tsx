@@ -4,59 +4,87 @@ import { useUI } from '../lib/ui';
 
 const VERT = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
 
-// ⑧ Bayer-dithered noise rendered as dots on a grid.
-// - drifts slowly; dots within the pointer radius are pushed outward, opening a clearing
-//   that stretches along the direction of travel (capsule between pointer and a lagging point);
+// ⑧ Ordered-dither field rendered as dots on a grid.
+// - 8×8 Bayer thresholds over drifting noise, so density forms visible clouds and gradients;
+//   dot size follows local density;
+// - dots within the pointer radius are pushed outward, opening a clearing that stretches
+//   along the direction of travel (capsule between pointer and a lagging point);
 // - a click sends an accent ripple;
-// - an optional image (the hero cutout) masks the field: no dots inside the silhouette,
-//   denser dots along its edge.
+// - the hero cutout masks the field (no dots inside the silhouette, more along its edge);
+// - hovering the cutout opens a lens in which the photo itself is drawn as dither.
 const FRAG = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 uniform vec2 uRes; uniform float uTime; uniform float uCell; uniform float uDpr;
 uniform vec2 uPtr; uniform vec2 uLag; uniform float uClear;
-uniform vec3 uRipple; uniform vec3 uBg; uniform vec3 uDot; uniform vec3 uAccent;
+uniform vec3 uRipple; uniform vec3 uBg; uniform vec3 uDot; uniform vec3 uInk; uniform vec3 uAccent;
 uniform sampler2D uImg; uniform vec4 uImgRect; uniform float uHasImg; uniform vec2 uDrift;
+uniform vec3 uLens; uniform float uLight;
 
 float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
-float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 4; i++){ v += a*n(p); p *= 2.03; a *= 0.5; } return v; }
-float bayer(vec2 c){
-  vec2 m = mod(c, 4.0); int i = int(m.x + m.y * 4.0);
-  float r = 0.0;
-  if (i==0) r=0.; else if (i==1) r=8.; else if (i==2) r=2.; else if (i==3) r=10.;
-  else if (i==4) r=12.; else if (i==5) r=4.; else if (i==6) r=14.; else if (i==7) r=6.;
-  else if (i==8) r=3.; else if (i==9) r=11.; else if (i==10) r=1.; else if (i==11) r=9.;
-  else if (i==12) r=15.; else if (i==13) r=7.; else if (i==14) r=13.; else r=5.;
-  return (r + 0.5) / 16.0; }
-float alphaAt(vec2 px){
+float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ v += a*n(p); p *= 2.02; a *= 0.5; } return v; }
+// 8×8 Bayer matrix by recursive interleave (64 threshold levels)
+float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
+float b4(vec2 a){ return b2(0.5 * a) * 0.25 + b2(a); }
+float bayer(vec2 a){ return b4(0.5 * a) * 0.25 + b2(a); }
+vec4 imgAt(vec2 px){
   vec2 uv = (px - uImgRect.xy) / uImgRect.zw;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0;
-  return texture2D(uImg, vec2(uv.x, 1.0 - uv.y)).a;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  return texture2D(uImg, vec2(uv.x, 1.0 - uv.y));
 }
 float capsule(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float t = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-4), 0.0, 1.0); return length(pa - ba * t); }
+float dotMask(vec2 frag, vec2 c, float r){ return 1.0 - smoothstep(r - 0.7, r + 0.7, distance(frag, c)); }
 
 void main(){
   vec2 frag = gl_FragCoord.xy;
+
+  // ---- hover lens: the photo itself as dither (finer grid) ----
+  if (uHasImg > 0.5 && uLens.z > 0.5) {
+    float lc = uCell * 0.5;
+    vec2 pcell = floor(frag / lc);
+    vec2 pc = (pcell + 0.5) * lc;
+    vec4 px = imgAt(pc);
+    float inLens = 1.0 - smoothstep(uLens.z - 24.0 * uDpr, uLens.z, distance(pc, uLens.xy));
+    if (px.a > 0.5 && inLens > 0.0) {
+      float lum = dot(px.rgb, vec3(0.299, 0.587, 0.114));
+      // lift the mid-tones of a low-key photo so features read as dots, then add contrast
+      lum = pow(lum, 0.55);
+      lum = clamp((lum - 0.5) * 1.3 + 0.5, 0.0, 1.0);
+      float val = mix(lum, 1.0 - lum, uLight);
+      float on = step(bayer(pcell), val);
+      float r = lc * 0.42;
+      gl_FragColor = vec4(mix(uBg, uInk, on * dotMask(frag, pc, r)), 1.0);
+      return;
+    }
+  }
+
   vec2 cell = floor(frag / uCell);
   vec2 center = (cell + 0.5) * uCell;
 
-  // density from drifting noise
-  vec2 q = (cell * uCell) / (uRes.y) * 2.4;
+  // density from drifting noise, contrast-shaped so there are empty and dense areas
+  vec2 q = (cell * uCell) / uRes.y * 2.2;
   float t = uTime * 0.02;
-  float v = fbm(q + uDrift + vec2(t, -t * 0.6) + fbm(q * 0.7 - t) * 0.8);
-  v = v * 1.1 - 0.12;
+  float v = fbm(q + uDrift + vec2(t, -t * 0.6) + fbm(q * 0.6 - t) * 0.9);
+  v = smoothstep(0.28, 0.78, v) * 0.92;
 
-  // cutout mask: nothing inside the silhouette, more along its edge
+  // cutout mask: nothing inside the silhouette, dots gather along its edge
   if (uHasImg > 0.5) {
-    float a = alphaAt(center);
-    if (a > 0.5) { gl_FragColor = vec4(uBg, 1.0); return; }
-    float r = 14.0 * uDpr;
-    float e = max(max(alphaAt(center + vec2(r, 0.0)), alphaAt(center - vec2(r, 0.0))), max(alphaAt(center + vec2(0.0, r)), alphaAt(center - vec2(0.0, r))));
-    v += e * 0.45;
+    if (imgAt(center).a > 0.5) { gl_FragColor = vec4(uBg, 1.0); return; }
+    float e = 0.0;
+    for (int k = 1; k <= 3; k++) {
+      float r = float(k) * 10.0 * uDpr;
+      float m = max(max(imgAt(center + vec2(r, 0.0)).a, imgAt(center - vec2(r, 0.0)).a), max(imgAt(center + vec2(0.0, r)).a, imgAt(center - vec2(0.0, r)).a));
+      e = max(e, m * (1.0 - float(k - 1) * 0.3));
+    }
+    v = max(v, e * 0.8);
   }
 
-  // pointer clearing: dots are pushed away from the capsule between pointer and lag point
+  // pointer clearing
   float radius = 120.0 * uDpr;
   float d = capsule(center, uLag, uPtr);
   float push = (1.0 - smoothstep(0.0, radius, d)) * uClear;
@@ -65,8 +93,8 @@ void main(){
   if (push > 0.55) { gl_FragColor = vec4(uBg, 1.0); return; }
 
   float on = step(bayer(cell), v);
-  float rad = 1.3 * uDpr;
-  float inDot = 1.0 - smoothstep(rad - 0.6, rad + 0.6, distance(frag, dotPos));
+  float rad = mix(0.9, 1.7, v) * uDpr;
+  float inDot = dotMask(frag, dotPos, rad);
 
   // click ripple
   vec3 col = uDot;
@@ -148,6 +176,8 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
     gl.uniform3fv(u('uBg'), rgb(styles.getPropertyValue('--bg').trim()));
     gl.uniform3fv(u('uDot'), rgb(styles.getPropertyValue('--dot').trim()));
     gl.uniform3fv(u('uAccent'), rgb(styles.getPropertyValue('--accent').trim()));
+    gl.uniform3fv(u('uInk'), rgb(styles.getPropertyValue('--fg').trim()));
+    gl.uniform1f(u('uLight'), theme === 'light' ? 1 : 0);
 
     // cutout texture
     const tex = gl.createTexture();
@@ -172,13 +202,14 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
       canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(u('uRes'), canvas.width, canvas.height);
-      gl.uniform1f(u('uCell'), Math.round(9 * dpr));
+      gl.uniform1f(u('uCell'), Math.round(8 * dpr));
     };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(canvas);
 
     // pointer state, in canvas pixels (GL origin bottom-left)
-    const s = { x: -1e4, y: -1e4, lx: -1e4, ly: -1e4, clear: 0, lastMove: 0, ripple: [0, 0, 0] as [number, number, number], driftX: 0, driftY: 0 };
+    const s = { x: -1e4, y: -1e4, lx: -1e4, ly: -1e4, clear: 0, lastMove: 0, ripple: [0, 0, 0] as [number, number, number], driftX: 0, driftY: 0,
+      cx: -1e4, cy: -1e4, lens: 0, lensX: 0, lensY: 0 };
     const toCanvas = (cx: number, cy: number) => {
       const r = canvas.getBoundingClientRect();
       return [(cx - r.left) * dpr, (r.bottom - cy) * dpr];
@@ -188,7 +219,9 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
       const [x, y] = toCanvas(e.clientX, e.clientY);
       if (s.x < -9000) { s.lx = x; s.ly = y; }
       s.x = x; s.y = y; s.lastMove = performance.now();
+      s.cx = e.clientX; s.cy = e.clientY;
     };
+    const onLeave = () => { s.cx = -1e4; s.cy = -1e4; };
     const onDown = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();
       if (e.clientY < r.top || e.clientY > r.bottom) return;
@@ -202,6 +235,7 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
     if (!reduce) {
       addEventListener('pointermove', onMove, { passive: true });
       addEventListener('pointerdown', onDown, { passive: true });
+      document.documentElement.addEventListener('pointerleave', onLeave);
       addEventListener('scroll', onScroll, { passive: true });
       addEventListener('deviceorientation', onTilt, { passive: true });
     }
@@ -228,6 +262,17 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
         const c = canvas.getBoundingClientRect();
         const r = img.getBoundingClientRect();
         gl.uniform4f(u('uImgRect'), (r.left - c.left) * dpr, (c.bottom - r.bottom) * dpr, r.width * dpr, r.height * dpr);
+        // Hover lens over the photo: grows in when the pointer is on the cutout, follows with lag.
+        const inside = liveRef.current && !reduce && s.cx > r.left && s.cx < r.right && s.cy > r.top && s.cy < r.bottom;
+        s.lens += ((inside ? 1 : 0) - s.lens) * 0.14;
+        const tx = s.cx - r.left, ty = s.cy - r.top;
+        if (s.lens < 0.02) { s.lensX = tx; s.lensY = ty; }
+        s.lensX += (tx - s.lensX) * 0.22; s.lensY += (ty - s.lensY) * 0.22;
+        const lr = s.lens * Math.min(170, r.width * 0.42);
+        img.style.setProperty('--lx', `${s.lensX}px`);
+        img.style.setProperty('--ly', `${s.lensY}px`);
+        img.style.setProperty('--lr', `${lr.toFixed(1)}px`);
+        gl.uniform3f(u('uLens'), (r.left - c.left + s.lensX) * dpr, (c.bottom - r.top - s.lensY) * dpr, lr * dpr);
       }
       gl.uniform1f(u('uHasImg'), hasImg);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -248,6 +293,7 @@ export function DitherField({ className = '', maskRef, live = true }: Props) {
       cancelAnimationFrame(raf); io.disconnect(); ro.disconnect();
       removeEventListener('pointermove', onMove);
       removeEventListener('pointerdown', onDown);
+      document.documentElement.removeEventListener('pointerleave', onLeave);
       removeEventListener('scroll', onScroll);
       removeEventListener('deviceorientation', onTilt);
       // Free GPU objects but keep the context: StrictMode (and theme changes) re-run this effect on the same canvas.

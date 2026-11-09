@@ -37,7 +37,10 @@ export function ditherIn(el: HTMLElement, ms = 900, cell = 3) {
     const k = Math.min(15, Math.floor(p * 16));
     set(masks[k]);
     if (p < 1) raf = requestAnimationFrame(tick);
-    else { el.style.maskImage = ''; el.style.webkitMaskImage = ''; }
+    else {
+      el.style.maskImage = ''; el.style.webkitMaskImage = '';
+      el.style.maskSize = ''; el.style.removeProperty('-webkit-mask-size');
+    }
   };
   raf = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(raf);
