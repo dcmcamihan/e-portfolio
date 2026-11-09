@@ -26,6 +26,7 @@ export function ProjectStack({ items }: { items: Project[] }) {
     if (reduce || mobile || !pin.current) return;
     const ctx = gsap.context(() => {
       const cards = gsap.utils.toArray<HTMLElement>('.stack__card');
+      gsap.set(cards, { filter: 'brightness(1)', scale: 1 });
       gsap.set(cards.slice(1), { yPercent: 110 });
       const tl = gsap.timeline({
         defaults: { ease: 'none' },

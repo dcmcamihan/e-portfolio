@@ -33,6 +33,20 @@ export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVide
   const reduce = useReducedMotion();
   const [inView, setInView] = useState(false);
   const [hover, setHover] = useState(false);
+  const [cue, setCue] = useState('');
+
+  // Captions are drawn as our own overlay: native cues scale with a cropped (object-fit: cover)
+  // video and run off-screen. The track stays the source of truth, hidden from native rendering.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !captions) return;
+    const t = el.textTracks[0];
+    if (!t) return;
+    t.mode = 'hidden';
+    const on = () => setCue(Array.from(t.activeCues || []).map((c) => (c as VTTCue).text).join(' '));
+    t.addEventListener('cuechange', on);
+    return () => t.removeEventListener('cuechange', on);
+  }, [captions, src]);
 
   useImperativeHandle(handle, () => ({
     toggle: () => {
@@ -54,8 +68,9 @@ export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVide
   useEffect(() => {
     if (!src || reduce || !autoplay) return;
     const want = inView && (hoverPlay ? hover : active);
+    // Release only if we still hold the slot: another card may have claimed it in the same tick.
     if (want) setPlaying(id);
-    else if (playing === id) setPlaying(null);
+    else setPlaying((cur) => (cur === id ? null : cur));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inView, active, hover, hoverPlay, src, reduce, autoplay]);
 
@@ -74,6 +89,7 @@ export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVide
     return <img className={`promo ${className}`} src={asset(poster)} alt={label} loading="lazy" decoding="async" />;
   }
   return (
+    <>
     <video
       ref={ref}
       className={`promo ${className}`}
@@ -88,11 +104,13 @@ export const PromoVideo = forwardRef<PromoVideoHandle, Props>(function PromoVide
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onPlay={() => { if (playing !== id) setPlaying(id); }}
-      onPause={() => { if (controls && playing === id) setPlaying(null); }}
+      onPause={() => { if (controls) setPlaying((cur) => (cur === id ? null : cur)); }}
     >
       <source src={asset(`${src}.webm`)} type="video/webm" />
       <source src={asset(`${src}.mp4`)} type="video/mp4" />
       {captions && <track kind="captions" src={asset(captions)} srcLang="en" label="English" default />}
     </video>
+    {captions && cue && <p className="promo__caption">{cue}</p>}
+    </>
   );
 });

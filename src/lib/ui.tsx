@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { storage } from './hooks';
 
 type Theme = 'dark' | 'light';
@@ -11,7 +11,7 @@ type UI = {
   open: (o: Overlay) => void;
   close: () => void;
   playing: string | null;
-  setPlaying: (id: string | null) => void;
+  setPlaying: Dispatch<SetStateAction<string | null>>;
 };
 
 const Ctx = createContext<UI | null>(null);

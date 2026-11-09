@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { routes, findProject } from '../lib/commands';
 import { projects } from '../data/projects';
 import { profile } from '../data/site';
@@ -43,6 +43,7 @@ export function Terminal() {
   const input = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const [lines, setLines] = useState<Line[]>([]);
+  const [boot, setBoot] = useState<Line[]>([]);
   const [value, setValue] = useState('');
   const [hist, setHist] = useState<string[]>([]);
   const [hi, setHi] = useState(-1);
@@ -55,19 +56,22 @@ export function Terminal() {
   };
   useFocusTrap(box, active, exit);
 
-  // mount + boot log
-  useEffect(() => {
+  // mount + boot log (layout effect: the prompt is focused before the next keystroke arrives)
+  useLayoutEffect(() => {
     if (!active) { setMounted(false); return; }
     setMounted(true);
-    if (reduce) { setLines(BOOT); input.current?.focus(); return; }
     setLines([]);
+    // Focus at once so nothing typed during the wipe is lost.
+    input.current?.focus({ preventScroll: true });
+    if (reduce) { setBoot(BOOT); return; }
+    setBoot([]);
     // Boot log types on (18ms/char) once the 1200ms wipe is mostly up.
     const timers: number[] = [];
     let t = 900;
     BOOT.forEach((b, k) => {
       for (let i = 1; i <= b.text.length; i++) {
         const txt = b.text.slice(0, i);
-        timers.push(window.setTimeout(() => setLines((ls) => {
+        timers.push(window.setTimeout(() => setBoot((ls) => {
           const next = [...ls];
           next[k] = { kind: b.kind, text: txt };
           return next;
@@ -75,7 +79,6 @@ export function Terminal() {
       }
       t += b.text.length * 18 + 120;
     });
-    timers.push(window.setTimeout(() => input.current?.focus(), t));
     return () => timers.forEach(clearTimeout);
   }, [active, reduce]);
 
@@ -124,6 +127,7 @@ export function Terminal() {
         return;
       case 'clear':
         setLines([]);
+        setBoot([]);
         return;
       case 'exit':
         setLines([...out, { kind: 'ok', text: 'returning to site…' }]);
@@ -138,7 +142,7 @@ export function Terminal() {
     <div className={`terminal ${mounted && !leaving ? 'is-open' : ''} ${leaving ? 'is-leaving' : ''}`} ref={box} role="dialog" aria-modal="true" aria-label="Terminal mode">
       <button type="button" className="terminal__close label" onClick={exit}>exit ✕</button>
       <div className="terminal__body" ref={scroller} onClick={() => input.current?.focus()} role="log" aria-live="polite">
-        {lines.map((l, k) => (
+        {[...boot, ...lines].map((l, k) => (
           <p key={k} className={`t-${l.kind}`}>
             {l.kind === 'ok' && !String(l.text).startsWith('boot') && <span className="t-tag">OK  </span>}
             {l.kind === 'err' && <span className="t-tag">ERR  </span>}
@@ -162,7 +166,7 @@ export function Terminal() {
                 const m = value.match(/^open\s+(\S*)$/i);
                 if (m) { e.preventDefault(); const p = findProject(m[1] || 'c'); if (p) setValue(`open ${p.slug}`); }
               }
-              if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); setLines([]); }
+              if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); setLines([]); setBoot([]); }
             }}
           />
         </form>
