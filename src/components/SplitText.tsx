@@ -11,6 +11,8 @@ type Props = {
   /** 'up' rises from below the mask; 'right' slides in from the right edge (line 2 of the hero). */
   from?: 'up' | 'right';
   className?: string;
+  /** Prefix for each character's data-k, so two copies of the same text can be matched. */
+  id?: string;
 };
 
 /**
@@ -18,7 +20,7 @@ type Props = {
  * with a stagger (800ms, out-expo). Reduced motion: the whole line fades in (see CSS).
  * Screen readers get the plain string.
  */
-export function SplitText({ text, play, delay = 0, stagger = 30, from = 'up', className = '' }: Props) {
+export function SplitText({ text, play, delay = 0, stagger = 30, from = 'up', className = '', id }: Props) {
   let i = 0;
   const words = text.split(' ');
   return (
@@ -29,7 +31,9 @@ export function SplitText({ text, play, delay = 0, stagger = 30, from = 'up', cl
             {[...w].map((ch) => {
               const k = i++;
               return (
-                <span key={k} className="split__char" style={{ '--d': `${delay + k * stagger}ms` } as CSSProperties}>{ch}</span>
+                <span key={k} className="split__char" data-k={id ? `${id}-${k}` : undefined} style={{ '--d': `${delay + k * stagger}ms` } as CSSProperties}>
+                  <span className="split__in">{ch}</span>
+                </span>
               );
             })}
           </span>

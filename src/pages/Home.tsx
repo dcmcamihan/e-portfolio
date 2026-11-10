@@ -33,13 +33,38 @@ export default function Home() {
   const nameIn = useRef<HTMLDivElement>(null);
   const nameLines = (
     <>
-      <span className="hero__line hero__line--1"><SplitText text={profile.first} play={play} /></span>
+      <span className="hero__line hero__line--1"><SplitText text={profile.first} play={play} id="a" /></span>
       <span className="hero__line hero__line--2">
-        <SplitText text={profile.last} play={play} delay={60} from="right" />
+        <SplitText text={profile.last} play={play} delay={60} from="right" id="b" />
         <span className="caret hero__caret" aria-hidden="true" />
       </span>
     </>
   );
+
+  // Subtle letter lift: the hovered letter rises ~0.07em, its neighbours less, then springs back.
+  // Applied to both name layers by data-k so the two-tone stays aligned.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!play) return;
+    const t = window.setTimeout(() => setSettled(true), 2000);
+    return () => window.clearTimeout(t);
+  }, [play]);
+  const lifted = useRef<HTMLElement[]>([]);
+  const liftAt = (key: string | null) => {
+    lifted.current.forEach((el) => el.style.removeProperty('--lift'));
+    lifted.current = [];
+    const wrap = nameWrap.current;
+    if (!key || !wrap || prefersReducedMotion()) return;
+    const [line, n] = key.split('-');
+    const k = Number(n);
+    const amounts: [number, number][] = [[0, 0.07], [-1, 0.035], [1, 0.035], [-2, 0.012], [2, 0.012]];
+    for (const [off, amt] of amounts) {
+      wrap.querySelectorAll<HTMLElement>(`[data-k="${line}-${k + off}"]`).forEach((el) => {
+        el.style.setProperty('--lift', String(amt));
+        lifted.current.push(el);
+      });
+    }
+  };
 
   // Keep the inverted layer's mask on the photo while both move (parallax, scroll, resize).
   useEffect(() => {
@@ -54,10 +79,6 @@ export default function Home() {
       layer.style.setProperty('--my', `${r.top - l.top}px`);
       layer.style.setProperty('--mw', `${r.width}px`);
       layer.style.setProperty('--mh', `${r.height}px`);
-      // follow the hover lens too: inside it the photo is drawn as dots, so the name stays base colour there
-      layer.style.setProperty('--lx', `${r.left - l.left + parseFloat(img.style.getPropertyValue('--lx') || '-9999')}px`);
-      layer.style.setProperty('--ly', `${r.top - l.top + parseFloat(img.style.getPropertyValue('--ly') || '-9999')}px`);
-      layer.style.setProperty('--lr', img.style.getPropertyValue('--lr') || '0px');
     };
     const layer = nameIn.current;
     if (layer) layer.style.setProperty('--photo', `url(${asset('img/hero.webp')})`);
@@ -98,7 +119,7 @@ export default function Home() {
   return (
     <>
       <section className={`hero ${play ? 'is-in' : ''}`} ref={hero} aria-labelledby="hero-name">
-        <div className="hero__field"><DitherField maskRef={cutout} live={live} /></div>
+        <div className="hero__field"><DitherField maskRef={cutout} live={live} avoidRef={nameWrap} /></div>
         <div className="hero__photo">
           <img ref={cutout} src={asset('img/hero.webp')} alt="" width={900} height={1479} decoding="async" {...{ fetchpriority: 'high' }} />
         </div>
@@ -111,7 +132,16 @@ export default function Home() {
 
         {/* Two-tone name: the base layer uses the theme's ink; a copy masked to the cutout's
             silhouette uses the opposite colour, so the name flips where it crosses the photo. */}
-        <div className="hero__namewrap wrap" ref={nameWrap}>
+        <div
+          className={`hero__namewrap wrap ${settled ? 'is-settled' : ''}`}
+          ref={nameWrap}
+          onPointerMove={(e) => {
+            if (!settled || e.pointerType === 'touch') return;
+            const ch = (e.target as HTMLElement).closest<HTMLElement>('.split__char');
+            liftAt(ch?.dataset.k ?? null);
+          }}
+          onPointerLeave={() => liftAt(null)}
+        >
           <h1 id="hero-name" className="hero__name" aria-label={profile.name}>{nameLines}</h1>
           <div className="hero__name hero__name--in" aria-hidden="true" ref={nameIn}>{nameLines}</div>
         </div>

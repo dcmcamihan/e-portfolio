@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { TLink, useGo } from '../lib/transition';
 import { ThemeToggle } from './ThemeToggle';
@@ -31,6 +31,27 @@ export function Nav() {
   const panel = useRef<HTMLDivElement>(null);
   const toggle = () => (menu ? close() : open('menu'));
 
+  // Sticky on scroll up: the bar slides away while scrolling down and returns as soon as you
+  // scroll up; past the top it sits on a glass background.
+  const [hidden, setHidden] = useState(false);
+  const [solid, setSolid] = useState(false);
+  useEffect(() => {
+    let last = scrollY, raf = 0;
+    const on = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = scrollY, dy = y - last;
+        if (Math.abs(dy) > 4) { setHidden(dy > 0 && y > 160); last = y; }
+        setSolid(y > 24);
+      });
+    };
+    on();
+    addEventListener('scroll', on, { passive: true });
+    return () => { removeEventListener('scroll', on); cancelAnimationFrame(raf); };
+  }, []);
+  useEffect(() => { setHidden(false); }, [loc.pathname]);
+
   useFocusTrap(panel, menu, close);
   useEffect(() => { if (menu) close(); /* close on route change */ // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pathname]);
@@ -43,7 +64,7 @@ export function Nav() {
   };
 
   return (
-    <header className={`nav ${menu ? 'is-open' : ''}`} ref={panel}>
+    <header className={`nav ${menu ? 'is-open' : ''} ${hidden && !menu ? 'is-hidden' : ''} ${solid ? 'is-solid' : ''}`} ref={panel} onFocus={() => setHidden(false)}>
       <a className="skip" href="#main">Skip to content</a>
 
       <div className="nav__bar">
@@ -51,7 +72,6 @@ export function Nav() {
         <span className="nav__chip nav__clock label" aria-label={`Davao City local time ${time}`}>Davao City · {time}</span>
         <div className="nav__actions">
           <TLink to="/contact" className="pill pill--call roll-host">
-            <span className="pill__dot" aria-hidden="true" />
             <Roll>Book a call</Roll>
           </TLink>
           <ThemeToggle className="pill pill--icon" />
@@ -91,7 +111,7 @@ export function Nav() {
         <aside className="menu__side">
           <div className="menu__contact">
             <TLink to="/contact" className="pill pill--call roll-host menu__call" onClick={() => close()}>
-              <span className="pill__dot" aria-hidden="true" /><Roll>Book a call</Roll>
+              <Roll>Book a call</Roll>
             </TLink>
             <span className="label muted">Contact</span>
             <a href={`mailto:${profile.email}`} className="roll-host"><Roll>Email</Roll></a>

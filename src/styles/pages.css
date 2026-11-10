@@ -33,17 +33,9 @@
 /* the inverted copy: exactly over the base layer, visible only inside the cutout's silhouette */
 .hero__name--in {
   position: absolute; inset: 0; padding-inline: inherit; color: var(--bg); pointer-events: none;
-  --mx: 0px; --my: 0px; --mw: 0px; --mh: 0px; --lx: -9999px; --ly: -9999px; --lr: 0px; --photo: none;
-  -webkit-mask-image: var(--photo), radial-gradient(circle at var(--lx) var(--ly), transparent calc(var(--lr) - 24px), #000 var(--lr));
-  -webkit-mask-repeat: no-repeat, no-repeat;
-  -webkit-mask-position: var(--mx) var(--my), 0 0;
-  -webkit-mask-size: var(--mw) var(--mh), 100% 100%;
-  -webkit-mask-composite: source-in;
-  mask-image: var(--photo), radial-gradient(circle at var(--lx) var(--ly), transparent calc(var(--lr) - 24px), #000 var(--lr));
-  mask-repeat: no-repeat, no-repeat;
-  mask-position: var(--mx) var(--my), 0 0;
-  mask-size: var(--mw) var(--mh), 100% 100%;
-  mask-composite: intersect;
+  --mx: 0px; --my: 0px; --mw: 0px; --mh: 0px; --photo: none;
+  -webkit-mask: var(--photo) no-repeat var(--mx) var(--my) / var(--mw) var(--mh);
+  mask: var(--photo) no-repeat var(--mx) var(--my) / var(--mw) var(--mh);
 }
 /* Dark: white on the background, accent cyan where the name crosses the photo.
    Light: a single layer with the difference blend (black on white, white over the photo). */
@@ -54,6 +46,9 @@
 [data-theme='light'] .hero__name .hero__caret { background: #FFFFFF; }
 [data-theme='light'] .hero__name--in { display: none; }
 .hero__line { display: block; white-space: nowrap; }
+/* letter lift: once the reveal is done the word masks open so lifted letters aren't clipped */
+.hero__namewrap.is-settled .split__word { overflow: visible; }
+.hero__name .split__in { display: inline-block; transform: translateY(calc(var(--lift, 0) * -1em)); transition: transform 520ms var(--ease-spring); }
 .hero__line--2 { align-self: flex-end; text-align: right; }
 .hero__caret { width: 0.08em; height: 0.72em; margin-left: 0.06em; vertical-align: -0.02em; background: var(--fg); opacity: 0; }
 .hero.is-in .hero__caret { opacity: 1; transition: opacity 0s 900ms; }

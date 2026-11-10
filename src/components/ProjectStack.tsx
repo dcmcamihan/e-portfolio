@@ -56,7 +56,10 @@ export function ProjectStack({ items }: { items: Project[] }) {
     );
   }
 
+  // GSAP's pin wraps the pinned element in a spacer; this outer div stays React's direct child,
+  // so switching to the mobile list (or unmounting) never asks React to remove a moved node.
   return (
+    <div className="stack-host">
     <div className="stack" ref={pin}>
       <ol className="stack__deck">
         {items.map((p, i) => (
@@ -66,6 +69,7 @@ export function ProjectStack({ items }: { items: Project[] }) {
         ))}
       </ol>
       <p className="stack__counter mono" aria-hidden="true"><span className="accent">{pad(front + 1)}</span> / {pad(n)}</p>
+    </div>
     </div>
   );
 }
