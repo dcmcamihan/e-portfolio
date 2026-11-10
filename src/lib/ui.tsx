@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { storage } from './hooks';
 
 type Theme = 'dark' | 'light';
-type Overlay = null | 'palette' | 'terminal';
+type Overlay = null | 'palette' | 'terminal' | 'menu';
 
 type UI = {
   theme: Theme;
