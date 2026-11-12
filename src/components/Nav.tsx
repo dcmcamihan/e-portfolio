@@ -12,11 +12,11 @@ import { useClock } from '../lib/hooks';
 import { scrollToTarget } from '../lib/scroll';
 
 const LINKS = [
-  { to: '/', label: 'Home', hash: '#home' },
-  { to: '/work', label: 'Work', hash: '#work' },
-  { to: '/about', label: 'About', hash: '#about' },
-  { to: '/certifications', label: 'Certifications', hash: '#certs' },
-  { to: '/contact', label: 'Contact', hash: '#contact' },
+  { to: '/', label: 'Home' },
+  { to: '/work', label: 'Work' },
+  { to: '/about', label: 'About' },
+  { to: '/certifications', label: 'Certifications' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 /**
@@ -53,45 +53,14 @@ export function Nav() {
   useEffect(() => { if (menu) close(); /* close on route change */ // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pathname]);
 
-  const nav = (to: string, hash?: string) => (e: React.MouseEvent) => {
+  // The menu always opens the separate pages; the home page footer handles in-page jumps.
+  const nav = (to: string) => (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
     close();
-
     requestAnimationFrame(() => {
-      const isHome = loc.pathname === '/';
-      const hashId = hash ? hash.replace(/^#/, '') : '';
-      const onPageEl = hashId ? document.getElementById(hashId) : null;
-
-      // When on Home, in-page sections scroll cleanly without full route reload
-      if (isHome && (to === '/' || onPageEl)) {
-        scrollToTarget(hashId || 0);
-        return;
-      }
-
-      // If user is already on the target route, scroll to top or hash
-      if (to === loc.pathname) {
-        if (hashId && onPageEl) scrollToTarget(hashId);
-        else scrollToTarget(0);
-        return;
-      }
-
-      // Otherwise run page transition
-      go(to);
-    });
-  };
-
-  const jumpToHash = (hash: string) => (e: React.MouseEvent) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    close();
-    requestAnimationFrame(() => {
-      if (loc.pathname === '/') {
-        scrollToTarget(hash);
-      } else {
-        go(`/${hash}`);
-      }
+      if (to === loc.pathname) scrollToTarget(0);
+      else go(to);
     });
   };
 
@@ -133,20 +102,11 @@ export function Nav() {
                 className={`menu__link roll-host ${active ? 'is-active' : ''}`}
                 style={{ transitionDelay: menu ? `${300 + i * 60}ms` : '0ms' }}
                 aria-current={active ? 'page' : undefined}
-                onClick={nav(l.to, l.hash)}
+                onClick={nav(l.to)}
               >
                 <span className="menu__idx label">0{i + 1}</span>
                 <Roll className="menu__label">{l.label}</Roll>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="menu__hash mono"
-                  title={`Jump to ${l.hash}`}
-                  onClick={jumpToHash(l.hash)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') jumpToHash(l.hash)(e as unknown as React.MouseEvent); }}
-                >
-                  {l.hash}
-                </span>
+                <span className="menu__hash mono" aria-hidden="true">{l.to}</span>
               </a>
             );
           })}

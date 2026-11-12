@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { profile, badges } from '../data/site';
 import { TLink } from '../lib/transition';
 import { asset, useClock } from '../lib/hooks';
+import { scrollToTarget } from '../lib/scroll';
 import { useInViewOnce } from '../lib/useInView';
 
 /**
@@ -148,10 +149,10 @@ export function Footer() {
 
         {/* 3. Footer Links Row */}
         <div className="footer__links-row">
-          <nav className="footer__nav-links" aria-label="Footer pages">
-            <TLink to="/work">Work</TLink>
-            <TLink to="/about">About</TLink>
-            <TLink to="/certifications">Certifications</TLink>
+          <nav className="footer__nav-links" aria-label="Jump to a section">
+            {[['work', 'Work'], ['about', 'About'], ['certs', 'Certifications']].map(([id, label]) => (
+              <a key={id} href={`#${id}`} onClick={(e) => { e.preventDefault(); scrollToTarget(id); }}>{label}</a>
+            ))}
           </nav>
           <div className="footer__social-links">
             <a href={profile.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
