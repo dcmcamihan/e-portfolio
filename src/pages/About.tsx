@@ -10,7 +10,6 @@ import { useTitle } from '../lib/useTitle';
 /** Wireframe 2g: portrait + whoami, commit graph (⑬), stack.json. */
 export default function About() {
   useTitle('About', profile.summary);
-  const stack = Array.from(new Set(Object.values(skills).flat()));
   const top = useRef<HTMLDivElement>(null);
   return (
     <div className="page wrap">
@@ -29,12 +28,12 @@ export default function About() {
       </div>
 
       <section className="section" aria-labelledby="h-journey">
-        <SectionHeader cmd="git log --graph" path="~/journey" result={`${journey.length} commits`} title="Journey" id="h-journey" />
+        <SectionHeader cmd="git log --graph" path="~/journey" title="Journey" id="h-journey" />
         <CommitGraph commits={journey} />
       </section>
 
       <section className="section" aria-labelledby="h-stack">
-        <SectionHeader cmd="cat stack.json" result={`${stack.length} items`} title="Stack" id="h-stack" />
+        <SectionHeader cmd="cat stack.json" title="Stack" id="h-stack" />
         <dl className="about__skills">
           {Object.entries(skills).map(([k, v]) => (
             <div key={k}><dt className="label">{k}</dt><dd><ul className="chips">{v.map((s) => <li key={s}>{s}</li>)}</ul></dd></div>

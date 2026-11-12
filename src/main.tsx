@@ -11,6 +11,8 @@ import './styles/tokens.css';
 import './styles/global.css';
 import './styles/components.css';
 import './styles/pages.css';
+import './styles/sections.css';
+import './styles/certs.css';
 import { UIProvider } from './lib/ui';
 import App from './App';
 

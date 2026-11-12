@@ -14,12 +14,12 @@ import { Preloader } from './components/Preloader';
 import { TransitionProvider } from './lib/transition';
 import { useUI } from './lib/ui';
 import { prefersReducedMotion } from './lib/hooks';
+import { setLenis, scrollToTarget } from './lib/scroll';
 import Home from './pages/Home';
 import Work from './pages/Work';
 import CaseStudy from './pages/CaseStudy';
 import About from './pages/About';
 import Certifications from './pages/Certifications';
-import Research from './pages/Research';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 
@@ -34,11 +34,17 @@ function SmoothScroll() {
   useEffect(() => {
     if (prefersReducedMotion()) return;
     lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+    setLenis(lenis);
     lenis.on('scroll', ScrollTrigger.update);
     const tick = (t: number) => lenis?.raf(t * 1000);
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
-    return () => { gsap.ticker.remove(tick); lenis?.destroy(); lenis = null; };
+    return () => {
+      gsap.ticker.remove(tick);
+      lenis?.destroy();
+      lenis = null;
+      setLenis(null);
+    };
   }, []);
 
   useEffect(() => {
@@ -46,12 +52,18 @@ function SmoothScroll() {
   }, [overlay]);
 
   useEffect(() => {
-    lenis?.scrollTo(0, { immediate: true });
+    scrollToTarget(0, { immediate: true });
     const id = window.setTimeout(() => ScrollTrigger.refresh(), 120);
     return () => window.clearTimeout(id);
   }, [loc.pathname]);
 
   return null;
+}
+
+/** The footer closes the home page only; other pages end on their own content. */
+function HomeOnlyFooter() {
+  const { pathname } = useLocation();
+  return pathname === '/' ? <Footer /> : null;
 }
 
 export default function App() {
@@ -68,12 +80,11 @@ export default function App() {
             <Route path="/work/:slug" element={<CaseStudy />} />
             <Route path="/about" element={<About />} />
             <Route path="/certifications" element={<Certifications />} />
-            <Route path="/research" element={<Research />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />
+      <HomeOnlyFooter />
       <CommandPalette />
       <Terminal />
       <ContextCursor />

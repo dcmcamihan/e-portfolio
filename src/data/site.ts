@@ -123,8 +123,7 @@ export const badges: Badge[] = [
   { id: 'aws-genai', name: 'AWS Academy Graduate — Generative AI Foundations', issuer: 'Amazon Web Services', date: 'Jan 2026', img: 'badges/aws-academy-graduate-generative-ai-foundations-trai.png', verify: 'https://www.credly.com/badges/bdc8b3cd-041f-46ba-8eaf-860282f8f206/public_url' },
   { id: 'aws-cloud', featured: true, name: 'AWS Academy Graduate — Cloud Foundations', issuer: 'Amazon Web Services', date: 'Oct 2025', img: 'badges/aws-academy-graduate-cloud-foundations-training-bad.png', verify: 'https://www.credly.com/badges/2e9a37f4-ff31-49de-a867-b7f0d8c0d389/public_url' },
   { id: 'aws-arch', name: 'AWS Academy Graduate — Cloud Architecting', issuer: 'Amazon Web Services', date: 'May 2026', img: 'badges/aws-academy-graduate-cloud-architecting-training-ba.png', verify: 'https://www.credly.com/badges/b6272527-99dc-4cff-a8fa-2168cd19ee18/public_url' },
-  // TODO: add the earned date for Data Science Orientation (not on the resume).
-  { id: 'ds', featured: true, name: 'Data Science Orientation', issuer: 'IBM (via Coursera)', date: '', img: 'badges/data-science-orientation.png', verify: 'https://www.credly.com/badges/10b09b74-8149-4701-89f9-e046db2ab2cf/public_url' },
+  { id: 'ds', featured: true, name: 'Data Science Orientation', issuer: 'IBM (via Coursera)', date: 'Jun 2025', img: 'badges/data-science-orientation.png', verify: 'https://www.credly.com/badges/10b09b74-8149-4701-89f9-e046db2ab2cf/public_url' },
   { id: 'cisco', featured: true, name: 'Introduction to Cybersecurity', issuer: 'Cisco Networking Academy', date: 'Feb 2026', img: 'badges/introduction-to-cybersecurity.png', verify: 'https://www.credly.com/badges/b1fcd339-b65b-456a-a777-54eb6ad5612f/public_url' },
 ];
 
@@ -136,6 +135,18 @@ export const hciCourses = [
   { org: 'Google', when: 'July 2025', title: 'Create High-Fidelity Designs and Prototypes in Figma', img: 'img/google-ux-figma.webp', pdf: 'docs/hci/Course_5.pdf' },
   { org: 'UC San Diego', when: 'May 2025', title: 'Input and Interaction', img: 'img/ucsd-input-interaction.webp', pdf: 'docs/hci/ucsd-input-interaction.pdf' },
   { org: 'Georgia Tech', when: 'May 2025', title: 'Introduction to User Experience Design', img: 'img/gatech-ux-design.webp', pdf: 'docs/hci/gatech-intro-ux.pdf' },
+];
+
+/** Courses completed on Coursera and LinkedIn Learning. `href` is the Coursera verify page or the certificate PDF. */
+export const courses = [
+  { org: 'IBM · Coursera', when: 'Nov 2025', title: 'Introduction to Networking and Storage', href: 'https://coursera.org/verify/XZCCP4XICO2N' },
+  { org: 'Duke University · Coursera', when: 'Sep 2025', title: 'Introduction to Machine Learning', href: 'https://coursera.org/verify/187N75TGVG62' },
+  { org: 'University of Colorado Boulder · Coursera', when: 'Sep 2025', title: 'Data Mining Methods', href: 'https://coursera.org/verify/XXCJ5NKNAHRX' },
+  { org: 'IBM · Coursera', when: 'Sep 2025', title: 'Introduction to Software Engineering', href: 'https://coursera.org/verify/K1XHCRPQTASP' },
+  { org: 'IBM · Coursera', when: 'Jul 2025', title: 'Data Science Foundations: Tools, Careers & Real-World Applications', href: 'https://coursera.org/verify/Z7BWQGJUBJWU' },
+  { org: 'POSTECH · Coursera', when: 'Jun 2025', title: 'Introduction and Programming with IoT Boards', href: 'https://coursera.org/verify/U3BXQYVTAFVB' },
+  { org: 'LinkedIn Learning', when: 'Jun 2024', title: 'Java 8 Essential Training', href: 'docs/certs/java-8-essential-training.pdf', pdf: true },
+  { org: 'LinkedIn Learning', when: 'Mar 2024', title: 'Programming Foundations: Discrete Mathematics', href: 'docs/certs/discrete-mathematics.pdf', pdf: true },
 ];
 
 export type Publication = {

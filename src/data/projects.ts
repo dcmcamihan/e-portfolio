@@ -34,6 +34,8 @@ export type Project = {
     transcript: string;
   };
   links: { label: string; href: string }[];
+  /** Papers to read, as PDFs under public/. One entry gives a single "Read the paper" button. */
+  papers?: { label: string; href: string }[];
 };
 
 const v = (slug: string) => ({
@@ -112,6 +114,11 @@ export const projects: Project[] = [
       transcript:
         'Promo walkthrough of the ChatSafe web app: a Taglish comment is typed in; the landing page opens into the dashboard; a Reddit URL goes through the four pipeline steps; the post library highlights a critical post; analytics show language and bullying breakdowns; a CSV batch is scanned. No narration.',
     },
+    papers: [
+      { label: 'Model benchmark', href: 'docs/chatsafe-bs1035.pdf' },
+      { label: 'End-to-end evaluation', href: 'docs/chatsafe-bs1036.pdf' },
+      { label: 'Psychological validation', href: 'docs/chatsafe-bs1037.pdf' },
+    ],
     links: [],
   },
   {
@@ -179,7 +186,11 @@ export const projects: Project[] = [
       transcript:
         "Promo walkthrough of the Jolen's Bicycle Supply app: the landing page builds in; the cursor logs in; dashboard counters and weekly bars fill; a helmet and a bike are added to the cart and paid in cash; sales reports draw a trend line and category pie. No narration.",
     },
-    links: [],
+    papers: [{ label: 'Read the paper', href: 'docs/jolens-paper.pdf' }],
+    links: [
+      { label: 'GitHub: frontend', href: 'https://github.com/dcmcamihan/bicycle-supply-frontend' },
+      { label: 'GitHub: backend', href: 'https://github.com/dcmcamihan/bicycle-supply-backend' },
+    ],
   },
   {
     slug: 'ai-image-detector',
@@ -245,6 +256,7 @@ export const projects: Project[] = [
       transcript:
         'Promo walkthrough of the AI Image Detector: a wall of images is scanned and labelled; dashboard stats and charts fill; an image is dragged into the dropzone and returned as AI-generated with a confidence and generator bars; the dataset grid opens a prediction detail. No narration.',
     },
+    papers: [{ label: 'Read the paper', href: 'docs/ai-image-detector-paper.pdf' }],
     links: [{ label: 'GitHub repository', href: 'https://github.com/dcmcamihan/ai-image-detector' }],
   },
   {
@@ -309,10 +321,11 @@ export const projects: Project[] = [
     video: {
       // TODO: the SeGlo-12 promo composition needs its jsx files to render; export it to
       // public/video/seglo-12{,-loop}.{mp4,webm} + seglo-12.vtt. Poster is a glove still until then.
-      poster: 'video/seglo-12-poster.jpg',
+      poster: 'img/seglo-glove.webp',
       transcript:
         'Promo video pending. The still shows the SeGlo-12 glove prototype: five flex sensors along the fingers and a gyroscope module on the back of the hand.',
     },
+    papers: [{ label: 'Read the paper', href: 'docs/seglo-12-paper.pdf' }],
     links: [{ label: 'GitHub repository', href: 'https://github.com/dcmcamihan/seglo12' }],
   },
 ];

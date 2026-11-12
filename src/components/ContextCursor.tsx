@@ -39,7 +39,7 @@ export function ContextCursor() {
       const t = el?.closest<HTMLElement>('[data-cursor]');
       const l = t?.dataset.cursor ? LABELS[t.dataset.cursor] ?? '' : '';
       setLabel((p) => (p === l ? p : l));
-      const isLink = !l && !!el?.closest('a, button, [role="button"], input, textarea, select, label');
+      const isLink = !l && !t && !!el?.closest('a, button, [role="button"], input, textarea, select, label');
       setLink((p) => (p === isLink ? p : isLink));
     };
     const leave = () => { visible = false; setOn(false); };

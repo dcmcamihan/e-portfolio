@@ -22,7 +22,12 @@ export function StickerBoard({ badges }: { badges: Badge[] }) {
   const flat = reduce;
   const entered = useInViewOnce(board, 0.25);
   const [pos, setPos] = useState<Record<string, Pos> | null>(() => {
-    try { const s = ss.get(KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+    try {
+      const s = ss.get(KEY);
+      const v = s ? JSON.parse(s) as Record<string, Pos> : null;
+      // drop positions saved while the board measured 0px wide
+      return v && Object.values(v).every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)) ? v : null;
+    } catch { return null; }
   });
   const [held, setHeld] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -42,7 +47,7 @@ export function StickerBoard({ badges }: { badges: Badge[] }) {
   // Grid layout from the Design System logic; dragged positions are stored as fractions of the board.
   const layout = useCallback(() => {
     const b = board.current;
-    if (!b) return;
+    if (!b || !b.clientWidth) return;
     const w = b.clientWidth;
     const cols = Math.max(1, Math.min(6, Math.floor((w - 40) / (SIZE + 20))));
     const rows = Math.ceil(badges.length / cols);

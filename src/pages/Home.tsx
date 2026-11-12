@@ -5,26 +5,25 @@ import { DitherField } from '../components/DitherField';
 import { SectionHeader } from '../components/SectionHeader';
 import { SplitText } from '../components/SplitText';
 import { RotatingRole } from '../components/RotatingRole';
-import { ProjectStack } from '../components/ProjectStack';
+import { ProjectBento } from '../components/ProjectBento';
 import { CommitGraph } from '../components/CommitGraph';
-import { StickerBoard } from '../components/StickerBoard';
+import { BuildPipeline } from '../components/BuildPipeline';
+import { CertSpotlight } from '../components/CertSpotlight';
 import { whenBooted } from '../components/Preloader';
-import { badges, journey, profile, services } from '../data/site';
+import { badges, journey, profile } from '../data/site';
 import { projects } from '../data/projects';
 import { TLink } from '../lib/transition';
-import { asset, prefersReducedMotion, useClock } from '../lib/hooks';
+import { asset, prefersReducedMotion } from '../lib/hooks';
 import { useTitle } from '../lib/useTitle';
 import { ditherIn } from '../lib/bayer';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SERVICE_TAGS = ['Web', 'App', 'AI', 'UX'];
 
 export default function Home() {
   useTitle();
   const hero = useRef<HTMLElement>(null);
   const cutout = useRef<HTMLImageElement>(null);
-  const time = useClock(profile.timezone);
   const [play, setPlay] = useState(false);
   const [live, setLive] = useState(false);
   useEffect(() => { if (!play) return; const t = window.setTimeout(() => setLive(true), 500); return () => window.clearTimeout(t); }, [play]);
@@ -51,7 +50,10 @@ export default function Home() {
   }, [play]);
   const lifted = useRef<HTMLElement[]>([]);
   const liftAt = (key: string | null) => {
-    lifted.current.forEach((el) => el.style.removeProperty('--lift'));
+    lifted.current.forEach((el) => {
+      el.style.removeProperty('--lift');
+      el.classList.remove('is-lifted');
+    });
     lifted.current = [];
     const wrap = nameWrap.current;
     if (!key || !wrap || prefersReducedMotion()) return;
@@ -61,6 +63,7 @@ export default function Home() {
     for (const [off, amt] of amounts) {
       wrap.querySelectorAll<HTMLElement>(`[data-k="${line}-${k + off}"]`).forEach((el) => {
         el.style.setProperty('--lift', String(amt));
+        if (off === 0) el.classList.add('is-lifted');
         lifted.current.push(el);
       });
     }
@@ -105,6 +108,8 @@ export default function Home() {
       const st = { trigger: el, start: 'top top', end: 'bottom top', scrub: true };
       gsap.to('.hero__line--1', { x: -40, ease: 'none', scrollTrigger: st });
       gsap.to('.hero__line--2', { x: 40, ease: 'none', scrollTrigger: st });
+      // 5a dissolve: finish fading the portrait before it reaches the next section.
+      gsap.to('.hero__drift', { y: () => el.offsetHeight * 0.4, opacity: 0, ease: 'none', scrollTrigger: { ...st, end: 'bottom 25%', invalidateOnRefresh: true } });
     }, el);
     const move = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
@@ -118,16 +123,16 @@ export default function Home() {
 
   return (
     <>
-      <section className={`hero ${play ? 'is-in' : ''}`} ref={hero} aria-labelledby="hero-name">
+      <section className={`hero ${play ? 'is-in' : ''}`} ref={hero} id="home" aria-labelledby="hero-name">
         <div className="hero__field"><DitherField maskRef={cutout} live={live} avoidRef={nameWrap} /></div>
         <div className="hero__photo">
+          <div className="hero__drift">
           <img ref={cutout} src={asset('img/hero.webp')} alt="" width={900} height={1479} decoding="async" {...{ fetchpriority: 'high' }} />
+          </div>
         </div>
 
         <div className="hero__meta wrap label">
-          <span>Davao City, PH<br />{profile.coords}</span>
           <span className="hero__whoami"><span className="accent">~ $</span> whoami</span>
-          <span className="right">Local time<br />{time} GMT+8</span>
         </div>
 
         {/* Two-tone name: the base layer uses the theme's ink; a copy masked to the cutout's
@@ -149,7 +154,7 @@ export default function Home() {
         <div className="hero__foot wrap">
           <div className="hero__intro">
             <p className="hero__role"><RotatingRole words={profile.roles} /></p>
-            <p className="hero__lede">Front-end and full-stack developer in Davao City. Websites, web apps and dashboards, AI integrations and UI/UX for clients and teams.</p>
+            <p className="hero__lede">Front-end and full-stack developer. Websites, web apps and dashboards, AI integrations and UI/UX for clients and teams.</p>
           </div>
           <TLink to="/contact" className="btn btn--lg" data-magnetic>
             <span data-magnetic-label>Start a project →</span>
@@ -157,37 +162,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section wrap" id="services" aria-labelledby="h-services">
-        <SectionHeader cmd="cat services.md" result="4 sections" title="What I build" id="h-services" />
-        <ol className="cap-grid">
-          {services.map((s, i) => (
-            <li key={s.id} className="cap">
-              <p className="label accent">#{String(i + 1).padStart(2, '0')} · {SERVICE_TAGS[i]}</p>
-              <h3>{s.title}</h3>
-              <p>{s.body}</p>
-              <p className="label muted">{s.stack.join(' · ')}</p>
-            </li>
-          ))}
-        </ol>
+      <section className="section wrap section--services" id="services" aria-labelledby="h-services">
+        <BuildPipeline />
       </section>
 
-      <section className="section section--stack" id="work" aria-labelledby="h-featured">
+      <section className="section section--chapters" id="work" aria-labelledby="h-featured">
         <div className="wrap">
-          <SectionHeader cmd="ls --featured" path="~/work" result={`${projects.length} entries`} title="Selected work" dot id="h-featured" />
+          <SectionHeader cmd="ls --featured" path="~/work" title="Selected work" dot id="h-featured" />
         </div>
-        <div className="wrap"><ProjectStack items={projects} /></div>
-        <p className="wrap stack__all"><TLink to="/work" className="link-arrow" data-cursor="view">All work ({projects.length}) <span aria-hidden="true">→</span></TLink></p>
+        <div className="wrap">
+          <ProjectBento items={projects} />
+        </div>
       </section>
 
+      <div id="about" style={{ scrollMarginTop: '100px' }} />
       <section className="section wrap" id="journey" aria-labelledby="h-journey">
-        <SectionHeader cmd="git log --oneline --graph" path="~/journey" result={`${journey.length} commits`} title="Journey" id="h-journey" />
+        <SectionHeader cmd="git log --oneline --graph" path="~/journey" title="Journey" id="h-journey" />
         <CommitGraph commits={journey} compact />
         <p className="stack__all"><TLink to="/about" className="link-arrow">More about me <span aria-hidden="true">→</span></TLink></p>
       </section>
 
       <section className="section wrap" id="certs" aria-labelledby="h-certs">
-        <SectionHeader cmd="ls" path="~/certs" result={`${featured.length} badges`} title="Certified" id="h-certs" />
-        <StickerBoard badges={featured} />
+        <CertSpotlight badges={featured} id="h-certs" />
         <p className="stack__all"><TLink to="/certifications" className="link-arrow">All certifications and trainings <span aria-hidden="true">→</span></TLink></p>
       </section>
     </>

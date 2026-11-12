@@ -28,10 +28,19 @@ float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
 float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ v += a*n(p); p *= 2.02; a *= 0.5; } return v; }
-// 8×8 Bayer matrix by recursive interleave (64 threshold levels)
-float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
-float b4(vec2 a){ return b2(0.5 * a) * 0.25 + b2(a); }
-float bayer(vec2 a){ return b4(0.5 * a) * 0.25 + b2(a); }
+// 8×8 Bayer matrix (64 threshold levels)
+float b2(vec2 p){
+  vec2 m = mod(floor(p), 2.0);
+  return (m.x < 0.5 && m.y < 0.5) ? 0.0 : (m.x > 0.5 && m.y < 0.5) ? 2.0 : (m.x < 0.5 && m.y > 0.5) ? 3.0 : 1.0;
+}
+float b4(vec2 p){
+  vec2 m = mod(floor(p), 4.0);
+  return b2(m) * 4.0 + b2(floor(m * 0.5));
+}
+float bayer(vec2 p){
+  vec2 m = mod(floor(p), 8.0);
+  return (b2(m) * 16.0 + b4(floor(m * 0.5)) + 0.5) / 64.0;
+}
 vec4 imgAt(vec2 px){
   vec2 uv = (px - uImgRect.xy) / uImgRect.zw;
   if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
@@ -42,22 +51,22 @@ float dotMask(vec2 frag, vec2 c, float r){ return 1.0 - smoothstep(r - 0.7, r + 
 void main(){
   vec2 frag = gl_FragCoord.xy;
 
-  // ---- hover lens: the photo itself as dither (finer grid) ----
+  // ---- hover lens: the photo itself as high-definition ordered dither ----
   if (uHasImg > 0.5 && uLens.z > 0.5) {
-    float lc = uCell * 0.5;
+    float lc = max(2.0, floor(2.5 * uDpr));
     vec2 pcell = floor(frag / lc);
     vec2 pc = (pcell + 0.5) * lc;
     vec4 px = imgAt(pc);
-    float inLens = 1.0 - smoothstep(uLens.z - 24.0 * uDpr, uLens.z, distance(pc, uLens.xy));
+    float inLens = 1.0 - smoothstep(uLens.z - 24.0 * uDpr, uLens.z, distance(frag, uLens.xy));
     if (px.a > 0.5 && inLens > 0.0) {
       float lum = dot(px.rgb, vec3(0.299, 0.587, 0.114));
-      // lift the mid-tones of a low-key photo so features read as dots, then add contrast
-      lum = pow(lum, 0.55);
-      lum = clamp((lum - 0.5) * 1.3 + 0.5, 0.0, 1.0);
+      // match the photo's grayscale/contrast/brightness filter
+      lum = clamp((lum * 1.15 - 0.5) * 1.1 + 0.5, 0.0, 1.0);
       float val = mix(lum, 1.0 - lum, uLight);
+      val = pow(val, 0.95);
       float on = step(bayer(pcell), val);
-      float r = lc * 0.42;
-      gl_FragColor = vec4(mix(uBg, uInk, on * dotMask(frag, pc, r)), 1.0);
+      vec3 ditherCol = mix(uBg, uInk, on);
+      gl_FragColor = vec4(mix(uBg, ditherCol, inLens), 1.0);
       return;
     }
   }
@@ -276,7 +285,7 @@ export function DitherField({ className = '', maskRef, avoidRef, live = true }: 
         const tx = s.cx - r.left, ty = s.cy - r.top;
         if (s.lens < 0.02) { s.lensX = tx; s.lensY = ty; }
         s.lensX += (tx - s.lensX) * 0.22; s.lensY += (ty - s.lensY) * 0.22;
-        const lr = s.lens * Math.min(170, r.width * 0.42);
+        const lr = s.lens * Math.min(110, r.width * 0.42);
         img.style.setProperty('--lx', `${s.lensX}px`);
         img.style.setProperty('--ly', `${s.lensY}px`);
         img.style.setProperty('--lr', `${lr.toFixed(1)}px`);

@@ -9,7 +9,7 @@ export default function Work() {
   useTitle('Work', 'Case studies: ChatSafe, Jolen’s Bicycle Supply, AI Image Detector and SeGlo-12.');
   return (
     <div className="page wrap">
-      <SectionHeader as="h1" cmd="ls" path="~/work" result={`${projects.length} entries`} title="Work" count={projects.length} />
+      <SectionHeader as="h1" cmd="ls" path="~/work" title="Work" count={projects.length} />
       <Carousel3D items={projects} />
       <section className="section" aria-labelledby="h-index">
         <h2 id="h-index" className="label muted">Index</h2>

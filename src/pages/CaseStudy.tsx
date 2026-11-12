@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { projectBySlug, nextProject, projectIndex, projects } from '../data/projects';
 import { publications } from '../data/site';
@@ -18,9 +18,6 @@ export default function CaseStudy() {
   const p = projectBySlug(slug);
   useTitle(p?.name, p?.summary);
   const [play, setPlay] = useState(prefersReducedMotion());
-  const [watch, setWatch] = useState(false);
-  const watchBtn = useRef<HTMLButtonElement>(null);
-  useEffect(() => setWatch(false), [slug]);
   const go = useGo();
   const [pull, setPull] = useState(0);
 
@@ -65,22 +62,33 @@ export default function CaseStudy() {
         <TLink to={`/work/${next.slug}`}>Next: {next.name} →</TLink>
       </nav>
 
-      {/* ⑦ case hero: the promo fades up behind the title after the transition; full-bleed, sound off, click for controls (2f). */}
-      <header className={`case__hero ${play ? 'is-in' : ''} ${watch ? 'is-watching' : ''}`}>
-        <div className="case__video" data-cursor={watch ? undefined : 'play'} onClick={() => { if (!watch && p.video.full) setWatch(true); }}>
-          <PromoVideo src={p.video.full} poster={p.video.poster} label={`${p.name} promo video`} controls={watch} captions={p.video.captions} />
+      {/* 1a Title, then theatre: title block on solid black, the promo in its own clean frame (captions off), facts below. */}
+      <header className={`case__hero ${play ? 'is-in' : ''}`}>
+        <div className="case__head wrap">
+          <div className="case__titleblock">
+            <LogLine cmd={`open ${p.slug}`} path="~/work" immediate />
+            <p className="label accent case__meta">{p.name} · {p.year} · {p.team}</p>
+            <h1 className="case__title"><SplitText text={p.headline} play={play} stagger={14} /></h1>
+          </div>
+          <div className="case__lede">
+            <p>{p.short}.</p>
+            {p.papers && p.papers.length > 0 && (
+              <div className="case__papers">
+                {p.papers.length > 1 && <span className="label muted">Read the papers</span>}
+                <div className="case__paper-row">
+                  {p.papers.map((x) => (
+                    <a key={x.href} className={`btn ${p.papers!.length > 1 ? 'btn--ghost' : ''}`} href={asset(x.href)} target="_blank" rel="noopener noreferrer">{x.label}</a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="case__overlay wrap">
-          <LogLine cmd={`open ${p.slug}`} path="~/work" immediate />
-          <p className="label case__meta">{p.name} · {p.year} · {p.team}</p>
-          <h1 className="case__title"><SplitText text={p.headline} play={play} stagger={14} /></h1>
-          {p.video.full && (
-            <button type="button" className="btn btn--ghost-invert case__watch" onClick={() => setWatch(true)} ref={watchBtn}>
-              ▶ Watch with controls
-            </button>
-          )}
+        <div className="wrap">
+          <div className="case__video" data-cursor="play">
+            <PromoVideo src={p.video.full} poster={p.video.poster} label={`${p.name} promo video`} controls />
+          </div>
         </div>
-        {watch && <button type="button" className="case__close label" onClick={() => { setWatch(false); watchBtn.current?.focus(); }}>Back to title ✕</button>}
       </header>
 
       <div className="wrap">
@@ -89,13 +97,6 @@ export default function CaseStudy() {
             <div key={f.label}><dt className="label">{f.label}</dt><dd>{f.value}</dd></div>
           ))}
         </dl>
-        <div className="case__alt">
-          <details>
-            <summary className="label">Text alternative for the video</summary>
-            <p>{p.video.transcript}</p>
-          </details>
-          <p className="label muted">Sound off · captions on · figures inside the promo are illustrative; results below come from the paper.</p>
-        </div>
       </div>
 
       <section className="case__points wrap" aria-label="Summary">

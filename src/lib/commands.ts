@@ -10,7 +10,6 @@ export const routes: Route[] = [
   { key: 'G W', path: '/work', label: 'Work', aliases: ['work', 'projects'] },
   { key: 'G A', path: '/about', label: 'About', aliases: ['about', 'journey'] },
   { key: 'G C', path: '/certifications', label: 'Certifications', aliases: ['certs', 'certifications'] },
-  { key: 'G R', path: '/research', label: 'Research', aliases: ['research', 'papers'] },
   { key: 'G M', path: '/contact', label: 'Contact', aliases: ['contact', 'mail'] },
 ];
 

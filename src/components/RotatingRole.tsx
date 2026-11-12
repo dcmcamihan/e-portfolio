@@ -8,9 +8,10 @@ import { useReducedMotion } from '../lib/hooks';
  */
 export function RotatingRole({ words, prefix = 'I build' }: { words: string[]; prefix?: string }) {
   const reduce = useReducedMotion();
-  const [i, setI] = useState(0);
-  const [prev, setPrev] = useState<number | null>(null);
-  const [w, setW] = useState<number | undefined>();
+  const [index, setIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [step, setStep] = useState(0);
+  const [width, setWidth] = useState<number | undefined>();
   const paused = useRef(false);
   const measure = useRef<HTMLSpanElement>(null);
 
@@ -18,27 +19,52 @@ export function RotatingRole({ words, prefix = 'I build' }: { words: string[]; p
     if (reduce) return;
     const id = window.setInterval(() => {
       if (paused.current) return;
-      setI((x) => { setPrev(x); return (x + 1) % words.length; });
+      setIndex((curr) => {
+        setPrevIndex(curr);
+        setStep((s) => s + 1);
+        return (curr + 1) % words.length;
+      });
     }, 2400);
     return () => window.clearInterval(id);
   }, [reduce, words.length]);
 
-  useLayoutEffect(() => { if (measure.current) setW(measure.current.offsetWidth); }, [i]);
+  // Clean up exited word after animation completes (600ms)
+  useEffect(() => {
+    if (prevIndex === null) return;
+    const timer = window.setTimeout(() => {
+      setPrevIndex(null);
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [prevIndex, step]);
 
-  const chars = (word: string, cls: string) => (
-    <span className={`role__word ${cls}`} aria-hidden="true">
-      {[...word].map((c, k) => <span key={k} style={{ '--k': k } as CSSProperties}>{c === ' ' ? ' ' : c}</span>)}
+  useLayoutEffect(() => {
+    if (measure.current) {
+      setWidth(measure.current.offsetWidth);
+    }
+  }, [index]);
+
+  const renderChars = (word: string, cls: string, key: string) => (
+    <span key={key} className={`role__word ${cls}`} aria-hidden="true">
+      {[...word].map((char, k) => (
+        <span key={k} style={{ '--k': k } as CSSProperties}>
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
     </span>
   );
 
   return (
-    <span className="role" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}>
+    <span
+      className="role"
+      onMouseEnter={() => { paused.current = true; }}
+      onMouseLeave={() => { paused.current = false; }}
+    >
       <span className="sr-only">{prefix} {words.join(', ')}</span>
       <span aria-hidden="true">{prefix}</span>
-      <span className="role__slot" style={{ width: w }} aria-hidden="true">
-        <span ref={measure} className="role__measure">{words[i]}</span>
-        {prev !== null && !reduce && chars(words[prev], 'is-out')}
-        {chars(words[i], prev !== null && !reduce ? 'is-in' : '')}
+      <span className="role__slot" style={{ width }} aria-hidden="true">
+        <span ref={measure} className="role__measure">{words[index]}</span>
+        {prevIndex !== null && !reduce && renderChars(words[prevIndex], 'is-out', `out-${step}-${words[prevIndex]}`)}
+        {renderChars(words[index], prevIndex !== null && !reduce ? 'is-in' : '', `in-${step}-${words[index]}`)}
       </span>
     </span>
   );

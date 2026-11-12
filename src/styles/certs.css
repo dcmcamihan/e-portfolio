@@ -1,0 +1,128 @@
+/* ---------- Certifications · interactive spotlight (CertSpotlight.tsx) ---------- */
+@property --glow { syntax: '<color>'; inherits: true; initial-value: transparent; }
+
+.cert { position: relative; }
+.cert__head { margin-bottom: var(--s-6); }
+
+/* the frame: a rounded stage with a soft coloured glow behind the badge that follows the featured one */
+.cert__frame {
+  position: relative; display: flex; flex-direction: column; gap: 40px; overflow: hidden;
+  padding: 56px; border-radius: 32px; border: 1px solid var(--line); background: var(--surface-2);
+  transition: --glow 800ms var(--ease-out);
+}
+.cert__glow {
+  position: absolute; right: -140px; top: 20px; width: 900px; height: 900px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--glow), transparent);
+}
+
+.cert__spot { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: 48px; align-items: center; min-height: 500px; }
+
+/* text side */
+.cert__text { display: flex; flex-direction: column; gap: 20px; max-width: 620px; }
+.cert__meta { font-size: 12px; letter-spacing: 0.08em; color: var(--accent); }
+.cert__mask { display: block; overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+.cert__name { display: block; font-size: clamp(32px, 4.4vw, 60px); font-weight: 500; letter-spacing: -0.04em; line-height: 1.06; text-wrap: balance; }
+.cert__what { margin: 0; font-size: 19px; line-height: 1.5; color: var(--fg-2); min-height: 4.6em; }
+.cert__facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; font-size: 13px; color: var(--fg-3); }
+.cert__facts > div { display: inline-flex; gap: 8px; white-space: nowrap; }
+.cert__facts dt { color: var(--fg-3); }
+.cert__facts dd { margin: 0; color: var(--fg); }
+.cert__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* badge side */
+.cert__zone {
+  position: relative; height: 500px; display: grid; place-items: center; perspective: 1000px;
+  border-radius: 32px; border: 2px dashed transparent; transition: border-color 300ms, background 300ms;
+  --rx: 0deg; --ry: 0deg; --lx: 50%; --ly: 50%;
+}
+.cert__zone.is-target { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.cert__zone.is-over { border-color: var(--accent); background: var(--accent-soft); }
+.cert__label { position: absolute; left: 0; right: 0; text-align: center; font-size: 11px; letter-spacing: 0.08em; pointer-events: none; }
+.cert__label--top { top: 18px; color: var(--accent); }
+.cert__label--bottom { bottom: 16px; color: var(--fg-3); opacity: 0.8; }
+
+/* the light that follows the pointer */
+.cert__light {
+  position: absolute; left: var(--lx); top: var(--ly); width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), transparent);
+  opacity: 0; transition: opacity 300ms; pointer-events: none;
+}
+.cert__zone.is-tilt .cert__light { opacity: 1; }
+
+.cert__stage {
+  position: relative; height: min(420px, calc(100% - 64px)); aspect-ratio: 1; max-width: 100%; cursor: grab; touch-action: pan-y; user-select: none;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cert__stage:active { cursor: grabbing; }
+.cert__zone.is-tilt .cert__stage { transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(1.04); transition: transform 80ms linear; }
+.cert__flick {
+  position: absolute; inset: 0; --fx: 0px; --fr: 0deg;
+  transform: translateX(var(--fx)) rotate(var(--fr));
+  transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.6));
+}
+[data-theme='light'] .cert__flick { filter: drop-shadow(0 22px 30px rgba(10, 17, 20, 0.28)); }
+.cert__flick.is-flicking { transition: none; }
+.cert__zone.is-tilt .cert__flick { filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.7)) brightness(1.07); }
+.cert__badge { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+/* switching: the new badge springs in from the flick direction, the old one leaves the other way */
+.cert.is-anim .cert__badge--in { animation: cert-in 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both, cert-fade 220ms ease-out both; }
+.cert__badge--out { animation: cert-out 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes cert-in { from { transform: translateX(calc(var(--dir) * 180px)) rotate(calc(var(--dir) * 18deg)); } }
+@keyframes cert-fade { from { opacity: 0; } }
+@keyframes cert-out { to { transform: translateX(calc(var(--dir) * -180px)) rotate(calc(var(--dir) * -18deg)); opacity: 0; } }
+
+/* the text rises in after the badge starts moving; the title comes out of its mask */
+.cert.is-anim .cert__meta { animation: cert-rise 520ms var(--ease-out) 120ms both; }
+.cert.is-anim .cert__name { animation: cert-mask 640ms var(--ease-out) 160ms both; }
+.cert.is-anim .cert__what, .cert.is-anim .cert__facts { animation: cert-rise 620ms var(--ease-out) 240ms both; }
+@keyframes cert-rise { from { opacity: 0; transform: translateY(18px); } }
+@keyframes cert-mask { from { transform: translateY(110%); } }
+
+/* thumbnail strip */
+.cert__strip { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+.cert__thumb {
+  position: relative; width: 100%; height: 112px; display: grid; place-items: center; padding: 0; cursor: grab;
+  border-radius: 16px; background: var(--surface); border: 1px solid var(--line); opacity: 0.55; user-select: none;
+  transition: background 300ms, border-color 300ms, opacity 300ms, transform 300ms var(--ease-out);
+}
+.cert__thumb:hover { opacity: 0.9; }
+.cert__thumb.is-on { background: var(--surface-3); border-color: var(--accent-line); opacity: 1; transform: translateY(-4px); }
+.cert__thumb.is-lifted { opacity: 0.25; }
+.cert__thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.cert__thumb img { width: 72px; height: 72px; object-fit: contain; pointer-events: none; }
+.cert__prog { position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.cert__prog-fill { display: block; height: 100%; background: var(--accent); transform-origin: left; animation: cert-prog 5s linear forwards; }
+.cert.is-hold .cert__prog-fill { animation-play-state: paused; }
+@keyframes cert-prog { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* the thumbnail while it is being dragged */
+.cert__ghost {
+  position: fixed; z-index: 140; width: 110px; height: 110px; margin: -55px 0 0 -55px; object-fit: contain; pointer-events: none;
+  transform: rotate(-6deg); filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6));
+  transition: width 200ms var(--ease-out), height 200ms var(--ease-out), margin 200ms var(--ease-out);
+}
+.cert__ghost.is-over { width: 200px; height: 200px; margin: -100px 0 0 -100px; }
+
+@media (max-width: 1000px) {
+  .cert__frame { padding: 32px; gap: 28px; }
+  .cert__spot { grid-template-columns: minmax(0, 1fr); gap: 28px; min-height: 0; }
+  .cert__text { max-width: none; }
+  .cert__what { min-height: 0; }
+  .cert__zone { height: 400px; }
+  .cert__glow { right: -300px; top: auto; bottom: 120px; }
+  .cert__strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .cert__frame { padding: 20px; border-radius: 22px; }
+  .cert__zone { height: 340px; }
+  .cert__thumb { height: 92px; }
+  .cert__thumb img { width: 58px; height: 58px; }
+  .cert__what { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cert__stage, .cert__flick, .cert__thumb, .cert__frame { transition: none; }
+  .cert__prog { display: none; }
+}

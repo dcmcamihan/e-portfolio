@@ -31,7 +31,7 @@ export default function Contact() {
           <div>
             <LogLine cmd="mail --to dianna" immediate />
             <h1 className="contact-band__title"><SplitText text="Tell me what you're building." play stagger={16} /></h1>
-            <p className="label muted">Davao {time} GMT+8</p>
+            <p className="label muted">Davao City · {time} GMT+8</p>
           </div>
           <DitherPhoto src="img/profile.webp" alt="Dianna Claire Marie Amihan" />
         </div>

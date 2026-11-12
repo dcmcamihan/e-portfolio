@@ -15,7 +15,7 @@ const HELP = [
   'whoami       who is this',
   'ls projects  list projects',
   'open <name>  open a case study',
-  'cd <page>    work, about, certs, research, contact',
+  'cd <page>    work, about, certs, contact',
   'theme        toggle light / dark',
   'clear        clear the screen',
   'exit         leave terminal mode',

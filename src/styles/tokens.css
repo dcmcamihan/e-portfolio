@@ -64,6 +64,9 @@
   --grain-opacity: 0.14;
   --grain-blend: screen;
   --shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+  /* nav capsule + pills: plain rgba (no color-mix) so the fill survives view transitions and Safari */
+  --nav-bg: rgba(8, 9, 10, 0.92);
+  --pill-bg: rgba(20, 23, 25, 0.9);
   --invert: #EDEFEF;
   --invert-ink: #08090A;
 }
@@ -94,6 +97,8 @@
   --grain-opacity: 0.08;
   --grain-blend: multiply;
   --shadow: 0 30px 60px rgba(10, 17, 20, 0.14);
+  --nav-bg: rgba(255, 255, 255, 0.94);
+  --pill-bg: rgba(244, 247, 248, 0.95);
   --invert: #0A1114;
   --invert-ink: #FFFFFF;
 }

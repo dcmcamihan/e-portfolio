@@ -1,18 +1,13 @@
 import { createContext, forwardRef, useCallback, useContext, useRef, useState, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { prefersReducedMotion } from './hooks';
+import { scrollToTarget } from './scroll';
 import { projects } from '../data/projects';
 
 /** `grow`: ⑪ hand-off — the clicked carousel card scales up from `rect` to fill the screen, then becomes the case hero. */
 export type GoOpts = { grow?: { rect: DOMRect; poster: string } };
 type Go = (to: string, opts?: GoOpts) => void;
 const Ctx = createContext<Go>(() => {});
-
-const scrollToHash = (hash: string) => {
-  const el = hash ? document.getElementById(hash.slice(1)) : null;
-  if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  else window.scrollTo(0, 0);
-};
 
 /** What the panel says for each route: same verbs as the command map. */
 function describe(path: string): { path: string; cmd: string; title: string; index?: string } {
@@ -27,7 +22,6 @@ function describe(path: string): { path: string; cmd: string; title: string; ind
     '/work': ['~/work', 'ls --featured', 'Work'],
     '/about': ['~', 'whoami', 'About'],
     '/certifications': ['~/certs', 'ls', 'Certifications'],
-    '/research': ['~/research', 'ls ./papers', 'Research'],
     '/contact': ['~', 'mail --to dianna', 'Contact'],
   };
   const [p, cmd, title] = map[path] ?? ['~', `cd ${path}`, path];
@@ -53,7 +47,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     const [path, hash = ''] = to.split('#');
     const target = path || loc.pathname;
     if (target === loc.pathname) {
-      if (hash) scrollToHash(`#${hash}`); else window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      if (hash) scrollToTarget(`#${hash}`); else scrollToTarget(0);
       return;
     }
     if (busy.current) return;
@@ -65,11 +59,22 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       busy.current = false;
       window.dispatchEvent(new Event('dcma:navigated'));
     };
+    // Safety watchdog so navigation is never permanently blocked
+    const watchdog = window.setTimeout(() => {
+      if (busy.current) finish();
+    }, 2500);
+
     if (prefersReducedMotion()) {
       setPhase('fade');
       window.setTimeout(() => {
         navigate(to);
-        requestAnimationFrame(() => { scrollToHash(hash ? `#${hash}` : ''); setPhase('idle'); finish(); });
+        requestAnimationFrame(() => {
+          if (hash) scrollToTarget(`#${hash}`, { immediate: true });
+          else scrollToTarget(0, { immediate: true });
+          setPhase('idle');
+          clearTimeout(watchdog);
+          finish();
+        });
       }, 120);
       return;
     }
@@ -81,9 +86,13 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       window.setTimeout(() => {
         navigate(to);
         requestAnimationFrame(() => {
-          window.scrollTo(0, 0);
+          scrollToTarget(0, { immediate: true });
           window.setTimeout(() => setGrow((g) => g && { ...g, fade: true }), 250);
-          window.setTimeout(() => { setGrow(null); finish(); }, 900);
+          window.setTimeout(() => {
+            setGrow(null);
+            clearTimeout(watchdog);
+            finish();
+          }, 900);
         });
       }, 800);
       return;
@@ -102,17 +111,25 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       curtain.current?.removeEventListener('transitionend', onEnd);
       navigate(to);
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
+        scrollToTarget(0, { immediate: true });
         window.setTimeout(() => {
           setPhase('out');
-          if (hash) window.setTimeout(() => scrollToHash(`#${hash}`), 300);
-          window.setTimeout(() => { setPhase('idle'); finish(); }, 650);
+          if (hash) window.setTimeout(() => scrollToTarget(`#${hash}`), 250);
+          window.setTimeout(() => {
+            setPhase('idle');
+            clearTimeout(watchdog);
+            finish();
+          }, 650);
         }, 120);
       }));
     };
-    const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'transform') swap(); };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.target === curtain.current && (e.propertyName === 'transform' || e.propertyName === '-webkit-transform')) {
+        swap();
+      }
+    };
     curtain.current?.addEventListener('transitionend', onEnd);
-    window.setTimeout(swap, 1000);
+    window.setTimeout(swap, 900);
   }, [loc.pathname, navigate]);
 
   return (
