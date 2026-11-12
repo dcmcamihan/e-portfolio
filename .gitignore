@@ -6,3 +6,4 @@ dist
 # pre-build asset staging folder (copied into public/)
 /assets/
 .claude/
+.vite
