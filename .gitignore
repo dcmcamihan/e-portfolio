@@ -1,14 +1,8 @@
-# macOS Finder metadata
+node_modules
+dist
 .DS_Store
-._*
-.AppleDouble
-.LSOverride
+*.log
 
-# Other operating-system metadata
-Thumbs.db
-Desktop.ini
-
-# macOS archive metadata
-__MACOSX/
-.Spotlight-V100/
-.Trashes/
+# pre-build asset staging folder (copied into public/)
+/assets/
+.claude/
