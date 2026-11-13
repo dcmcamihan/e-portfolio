@@ -1,6 +1,5 @@
 # DCMA — portfolio
 
-Personal site of **Dianna Claire Marie Amihan**, front-end / full-stack developer in Davao City.
 Live at <https://dcmcamihan.github.io/e-portfolio/>.
 
 Built with Vite, React and TypeScript, GSAP + ScrollTrigger, Lenis, a WebGL dither shader and plain CSS with design tokens.
