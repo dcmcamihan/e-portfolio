@@ -50,7 +50,7 @@ export const projects: Project[] = [
     slug: 'chatsafe',
     name: 'ChatSafe',
     short: 'Cyberbullying detection for code-mixed Filipino text',
-    headline: 'Detecting cyberbullying in Taglish and Bisaya, deployed on AWS',
+    headline: 'Detecting cyberbullying in Taglish and Bisaya',
     year: '2025–26',
     categories: ['AI/ML', 'Web'],
     stackLine: 'FastAPI · HateBERT · AWS',
@@ -60,13 +60,13 @@ export const projects: Project[] = [
       { label: 'Infra', value: 'AWS, containerised services' },
       { label: 'Output', value: 'Thesis + 3 CCCIS 2026 papers' },
     ],
-    roleDetail: 'Manuscript, model pipeline, back end, front end, database and AWS deployment',
+    roleDetail: 'Manuscript, model pipeline, back end, front end, database and AWS infrastructure',
     team: 'Thesis group of three, Mapúa MCM',
     stack: ['Python', 'Gemini API', 'HateBERT', 'React', 'FastAPI', 'MySQL', 'AWS'],
     summary:
       'A translate-then-classify pipeline that detects cyberbullying in code-mixed Filipino, Bisaya and English text from Philippine social media.',
     stats: [
-      { value: '0.7044', label: 'Macro-F1 of the deployed system on the gold-standard set', source: 'Thesis, Objective 3' },
+      { value: '0.7044', label: 'Macro-F1 of the full pipeline on the gold-standard set', source: 'Thesis, Objective 3' },
       { value: '0.7245', label: "Fleiss' kappa between three licensed psychology professionals", source: 'Thesis, Objective 4' },
       { value: '213,090', label: 'English training instances curated from four public datasets', source: 'Thesis, Objective 1' },
       { value: '3', label: 'papers accepted at CCCIS 2026', source: 'Acceptance notices BS1035–BS1037' },
@@ -84,8 +84,8 @@ export const projects: Project[] = [
         key: 'Architecture',
         summary: 'Gemini Flash translates, a fine-tuned HateBERT classifies.',
         body: [
-          'ChatSafe uses Google Gemini Flash to normalise code-mixed text into English, then classifies it with a fine-tuned hate-speech model. Five architectures were compared — SVM, mBERT, XLM-RoBERTa Base, XLM-RoBERTa Large and HateBERT. HateBERT reached the highest Filipino Macro-F1 (0.6780) and the smallest cross-lingual drop (9.2%), so it became the deployed model.',
-          'I built the FastAPI back end around the translation and classification steps, the MySQL data layer, and the AWS deployment that runs the services as containers. I also led the manuscript and the system architecture.',
+          'ChatSafe uses Google Gemini Flash to normalise code-mixed text into English, then classifies it with a fine-tuned hate-speech model. Five architectures were compared — SVM, mBERT, XLM-RoBERTa Base, XLM-RoBERTa Large and HateBERT. HateBERT reached the highest Filipino Macro-F1 (0.6780) and the smallest cross-lingual drop (9.2%), so it became the classifier in the final system.',
+          'I built the FastAPI back end around the translation and classification steps, the MySQL data layer, and the AWS setup that runs the services as containers. I also led the manuscript and the system architecture.',
         ],
       },
       {
@@ -99,7 +99,7 @@ export const projects: Project[] = [
         key: 'Results',
         summary: 'Macro-F1 0.7044; translation is the component that matters.',
         body: [
-          'The deployed system scored a Macro-F1 of 0.7044 and found about 4 in 5 actual cyberbullying posts on a purpose-built gold-standard set.',
+          'The full ChatSafe pipeline scored a Macro-F1 of 0.7044 and found about 4 in 5 actual cyberbullying posts on a purpose-built gold-standard set.',
           "Three licensed psychology professionals reached substantial agreement with each other (Fleiss' kappa 0.7245). Removing the translation step dropped pipeline-to-expert agreement to near chance (kappa 0.1910), which confirms translation as the key component.",
         ],
       },
@@ -132,7 +132,7 @@ export const projects: Project[] = [
     facts: [
       { label: 'Role', value: 'Full-stack developer' },
       { label: 'Stack', value: 'React · Express · MySQL' },
-      { label: 'Infra', value: 'Render (web) · MySQL' },
+      { label: 'Infra', value: 'Node.js API · MySQL' },
       { label: 'Output', value: 'POS for a real shop + paper' },
     ],
     roleDetail: 'Front end, back end and database',
@@ -274,14 +274,14 @@ export const projects: Project[] = [
       { label: 'Output', value: 'ICSTE 2025 paper (Springer LNEE)' },
     ],
     roleDetail: 'Glove firmware, vision model, Kotlin app and manuscript',
-    team: 'Team of five, Mapúa MCM',
+    team: 'Two students and three faculty co-authors, Mapúa MCM',
     stack: ['Kotlin', 'Jetpack Compose', 'Arduino', 'C++', 'MediaPipe', 'TensorFlow Lite', 'Python'],
     summary:
       'A dual-mode American Sign Language translator: a flex-sensor glove and an on-device camera model, both turning signs into text and speech in real time, offline.',
     stats: [
       { value: '87%', label: 'vision accuracy across 38 gesture classes (macro-F1 0.86)', source: 'ICSTE 2025 paper' },
       { value: '4.51/5', label: 'user satisfaction from beta testing with ten participants', source: 'ICSTE 2025 paper' },
-      { value: '97.04%', label: 'accuracy of the current model: 24 static letters (no J or Z) and 16 phrases', source: 'seglo12 repository' },
+      { value: '7', label: 'gesture classes classified perfectly (c, f, n, p, q, s, w) out of 38', source: 'ICSTE 2025 paper' },
     ],
     sections: [
       {
@@ -310,7 +310,9 @@ export const projects: Project[] = [
         key: 'Results',
         summary: 'Accepted at ICSTE 2025; 4.51/5 from beta testers.',
         body: [
-          'The paper was accepted at ICSTE 2025 for Springer LNEE. Beta testing with ten participants, including a member of the hard-of-hearing community, gave an overall satisfaction score of 4.51 out of 5.',
+          'The vision module reached 87% accuracy (macro-F1 0.86) on a held-out set of 1,950 samples across 38 classes. Most errors came from look-alike pairs such as i and i_love_you, and h and r.',
+          'Beta testing with ten participants, including a member of the hard-of-hearing community, gave an overall satisfaction score of 4.51 out of 5 (usability 4.80, functionality 4.40, machine learning 4.32).',
+          'The glove recognises static letters only, and its response time varied between signers. The paper was accepted at ICSTE 2025 for Springer LNEE.',
         ],
       },
     ],
@@ -319,11 +321,10 @@ export const projects: Project[] = [
       { src: 'img/seglo-app-results.webp', alt: 'SeGlo-12 app detection results panel showing the detected sign and a confidence bar' },
     ],
     video: {
-      // TODO: the SeGlo-12 promo composition needs its jsx files to render; export it to
-      // public/video/seglo-12{,-loop}.{mp4,webm} + seglo-12.vtt. Poster is a glove still until then.
+      // Still image only: no promo video for SeGlo-12.
       poster: 'img/seglo-glove.webp',
       transcript:
-        'Promo video pending. The still shows the SeGlo-12 glove prototype: five flex sensors along the fingers and a gyroscope module on the back of the hand.',
+        'Photo of the SeGlo-12 glove prototype: five flex sensors along the fingers and a gyroscope module on the back of the hand, wired to an Arduino Nano board with a Bluetooth module.',
     },
     papers: [{ label: 'Read the paper', href: 'docs/seglo-12-paper.pdf' }],
     links: [{ label: 'GitHub repository', href: 'https://github.com/dcmcamihan/seglo12' }],

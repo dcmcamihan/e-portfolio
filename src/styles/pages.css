@@ -135,6 +135,9 @@
 .case__lede p { margin: 0; font-size: 1.125rem; line-height: 1.55; color: #B9BFC1; max-width: 36ch; }
 .case__video { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #050505; border: 1px solid #1E2224; border-radius: 20px; overflow: hidden; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6); opacity: 0; transform: translateY(16px); transition: opacity var(--t-scene) var(--ease-out) 300ms, transform var(--t-scene) var(--ease-out) 300ms; }
 .case__hero.is-in .case__video { opacity: 1; transform: none; }
+/* Photo-only projects: the frame takes the photo's own proportions, so there are no black bars. */
+.case__video--still { aspect-ratio: 1600 / 1188; max-width: 880px; margin-inline: auto; }
+.case__video--still .promo { object-fit: cover; }
 .case__video .promo { width: 100%; height: 100%; object-fit: contain; aspect-ratio: auto; }
 @media (prefers-reduced-motion: reduce) { .case__video { opacity: 1; transform: none; transition: none; } }
 @media (max-width: 900px) { .case__head { grid-template-columns: 1fr; gap: var(--s-5); } .case__video { border-radius: 14px; } }

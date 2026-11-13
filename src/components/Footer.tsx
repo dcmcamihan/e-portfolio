@@ -124,7 +124,7 @@ export function Footer() {
             >
               <video
                 src={asset('video/chatsafe-loop.mp4')}
-                poster={asset('img/covers/chatsafe.webp')}
+                poster={asset('img/chatsafe.webp')}
                 autoPlay
                 muted
                 loop

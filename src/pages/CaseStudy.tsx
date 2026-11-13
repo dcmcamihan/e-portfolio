@@ -85,7 +85,7 @@ export default function CaseStudy() {
           </div>
         </div>
         <div className="wrap">
-          <div className="case__video" data-cursor="play">
+          <div className={`case__video${p.video.full ? '' : ' case__video--still'}`} data-cursor="play">
             <PromoVideo src={p.video.full} poster={p.video.poster} label={`${p.name} promo video`} controls />
           </div>
         </div>

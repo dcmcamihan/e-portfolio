@@ -95,7 +95,7 @@ export const journey: Commit[] = [
     ref: 'HEAD → main · 2026',
     title: 'release: IT Intern, ANFLOCOR · freelance',
     where: 'ANFLO Management and Investment Corporation · Davao City',
-    when: 'Aug–Oct 2026 · now',
+    when: 'Aug 3 – Oct 22, 2026',
     body: 'Front-end / full-stack work for clients: websites, web apps, AI integrations, UI/UX.',
     notes: [
       'Desktop Support Intern, IT Department: workstation setup, software installs, printer and connectivity fixes, equipment inventory',
@@ -182,7 +182,7 @@ export const publications: Publication[] = [
     status: 'Accepted',
     authors: 'Amihan, D. C. M. C., et al.',
     project: 'chatsafe',
-    abstract: 'Evaluates the deployed ChatSafe pipeline end to end on a purpose-built gold-standard set (Macro-F1 0.7044) and ablates the translation layer to measure how much it contributes.',
+    abstract: 'Evaluates the full ChatSafe pipeline end to end on a purpose-built gold-standard set (Macro-F1 0.7044) and ablates the translation layer to measure how much it contributes.',
   },
   {
     id: 'BS1037',
@@ -219,7 +219,7 @@ export const publications: Publication[] = [
     id: 'AID',
     title: 'Advancing AI Image Forensics: Machine Learning Approaches for Detecting Real and AI-Generated Images Using Multi-Source Unstructured Image Datasets',
     venue: 'Course manuscript, Mapúa Malayan Colleges Mindanao',
-    year: '', // TODO: confirm the year of the AI image detection manuscript
+    year: '2025',
     status: 'Manuscript',
     authors: 'Amihan, D. C. M. C., Monteverde, I. M. C., Yncierto, J. H. R.',
     project: 'ai-image-detector',
